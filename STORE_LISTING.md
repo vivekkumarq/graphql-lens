@@ -31,6 +31,8 @@ Inspect GraphQL in DevTools: queries, mutations, subscriptions, variables, error
 
 ## Detailed description
 
+Paste ONLY the text inside this box into the Description field. Do not add keyword lists; Chrome rejects them as spam (violation "Yellow Argon").
+
 ```
 GraphQL Lens adds a GraphQL panel to DevTools. Every query, mutation and subscription the page sends gets its own row, named after its operation, so you never have to dig through a wall of identical "POST /graphql" rows in the Network panel again.
 
@@ -115,7 +117,6 @@ Saves the user's settings (theme, history limit, display options) locally, and, 
 
 - Same zip, description and screenshots.
 - "Does your extension require login?": No.
-- Search terms: `graphql, devtools, network, debugging, apollo, relay, subscriptions`.
 - Test notes for certification:
   ```
   Open DevTools (F12) on https://countries.trevorblades.com/ and run any query in the page, or on any site using GraphQL; open the "GraphQL Lens" tab. No account needed.
