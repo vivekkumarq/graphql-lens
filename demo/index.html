@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>GraphQL Lens demo</title>
+    <style>
+      body {
+        font:
+          14px/1.5 system-ui,
+          sans-serif;
+        margin: 0;
+        background: #f6f8fa;
+        color: #1f2328;
+      }
+      main {
+        max-width: 980px;
+        margin: 0 auto;
+        padding: 24px 16px;
+      }
+      h1 {
+        margin: 0 0 4px;
+        font-size: 22px;
+      }
+      p.lead {
+        margin: 0 0 20px;
+        color: #57606a;
+      }
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+        gap: 10px;
+      }
+      button {
+        text-align: left;
+        padding: 10px 12px;
+        border: 1px solid #d0d7de;
+        border-radius: 8px;
+        background: #fff;
+        cursor: pointer;
+        font: inherit;
+      }
+      button:hover {
+        border-color: #0d7d74;
+      }
+      button b {
+        display: block;
+      }
+      button span {
+        color: #57606a;
+        font-size: 12px;
+      }
+      .run-all {
+        background: #0d7d74;
+        color: #fff;
+        border-color: #0d7d74;
+        margin-bottom: 16px;
+      }
+      .run-all span {
+        color: #d9f2ef;
+      }
+      pre {
+        background: #fff;
+        border: 1px solid #d0d7de;
+        border-radius: 8px;
+        padding: 10px;
+        height: 180px;
+        overflow: auto;
+        font-size: 12px;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>GraphQL Lens demo</h1>
+      <p class="lead">
+        Open DevTools → <b>GraphQL Lens</b>, then click the buttons. Every kind of GraphQL traffic the
+        extension understands is here.
+      </p>
+      <button class="run-all" id="run-all">
+        <b>Run every scenario</b><span>Fires all of the requests below in order</span>
+      </button>
+      <div class="grid" id="buttons"></div>
+      <h2>Log</h2>
+      <pre id="log"></pre>
+    </main>
+    <script src="/app.js"></script>
+  </body>
+</html>

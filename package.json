@@ -1,0 +1,74 @@
+{
+  "name": "graphql-lens",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Inspect. Debug. Understand GraphQL traffic.",
+  "license": "MIT",
+  "type": "module",
+  "scripts": {
+    "dev": "vite build --watch --mode development",
+    "build": "tsc --noEmit && vite build",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint .",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "demo": "node demo/server.mjs",
+    "e2e": "npm run build && node scripts/e2e.mjs chrome --real",
+    "e2e:edge": "npm run build && node scripts/e2e.mjs edge --real",
+    "screenshots": "npm run build && node scripts/e2e.mjs chrome --screenshots && node scripts/promo.mjs",
+    "package": "npm run build && node scripts/package.mjs",
+    "release": "npm run lint && npm test && npm run package",
+    "sites": "npm run build && node scripts/sites.mjs chrome"
+  },
+  "dependencies": {
+    "@codemirror/commands": "^6.11.1",
+    "@codemirror/lang-json": "^6.0.2",
+    "@codemirror/language": "^6.13.1",
+    "@codemirror/search": "^6.7.2",
+    "@codemirror/state": "^6.7.6",
+    "@codemirror/view": "^6.43.15",
+    "@lezer/highlight": "^1.2.5",
+    "graphql": "^17.0.2",
+    "react": "^19.3.0",
+    "react-dom": "^19.3.0"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@types/chrome": "^0.3.4",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "@vitejs/plugin-react": "^6.1.1",
+    "eslint": "^10.11.0",
+    "eslint-plugin-react-hooks": "^7.1.1",
+    "globals": "^17.12.0",
+    "prettier": "^3.9.9",
+    "puppeteer-core": "^25.16.0",
+    "typescript": "^6.0.3",
+    "typescript-eslint": "^8.71.0",
+    "vite": "^8.3.1",
+    "vitest": "^5.0.3",
+    "ws": "^8.22.0"
+  },
+  "author": "Vivek Kumar",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/vivekkumarq/graphql-lens"
+  },
+  "keywords": [
+    "graphql",
+    "devtools",
+    "chrome-extension",
+    "edge-extension",
+    "network",
+    "debugging"
+  ],
+  "engines": {
+    "node": ">=22.2"
+  },
+  "homepage": "https://github.com/vivekkumarq/graphql-lens#readme",
+  "bugs": {
+    "url": "https://github.com/vivekkumarq/graphql-lens/issues"
+  }
+}

@@ -1,0 +1,12 @@
+{
+  "appName": {
+    "message": "GraphQL Lens",
+    "description": "Extension and DevTools panel name. Rename the product here."
+  },
+  "appShortName": {
+    "message": "GraphQL Lens"
+  },
+  "appDescription": {
+    "message": "Inspect GraphQL in DevTools: queries, mutations, subscriptions, variables, errors, batching, replay and cURL. Private, 100% local."
+  }
+}

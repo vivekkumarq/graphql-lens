@@ -1,0 +1,5 @@
+dist
+release
+store-assets
+node_modules
+package-lock.json
