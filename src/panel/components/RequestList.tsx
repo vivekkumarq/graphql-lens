@@ -11,7 +11,7 @@ import type { GraphQLRequest } from '../../types/graphql';
 import { StatusBadge, TypeBadge } from './Badges';
 import { formatBytes, formatDuration, formatTime, shortUrl } from '../utils/format';
 
-const ROW = 24; // fixed row height keeps virtualization trivial
+const ROW = 28; // fixed row height keeps virtualization trivial
 const OVERSCAN = 10;
 
 interface Props {
@@ -48,7 +48,7 @@ const Row = memo(function Row({
       onMouseDown={(e) => onClick(req.id, e)}
     >
       <span role="gridcell" className="col-name" title={req.operations.map((o) => o.name).join('\n')}>
-        <TypeBadge type={op?.operationType} persisted={!!op?.persistedQueryHash} />
+        <TypeBadge type={op?.operationType} persisted={!!op?.persistedQueryHash} rest={req.kind === 'rest'} />
         <span className="name">{op?.name}</span>
         {req.isBatch && (
           <span className="batch" title="Batched request">
@@ -74,7 +74,7 @@ const Row = memo(function Row({
         {formatTime(req.timestamp)}
       </span>
       <span role="gridcell" className="col-url" title={req.url}>
-        {req.method !== 'POST' && <b className="method">{req.method}</b>}
+        {(req.method !== 'POST' || req.kind === 'rest') && <b className="method">{req.method}</b>}
         {shortUrl(req.url)}
       </span>
     </div>

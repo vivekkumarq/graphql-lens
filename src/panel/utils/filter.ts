@@ -1,7 +1,7 @@
 import type { GraphQLRequest } from '../../types/graphql';
 import { statusClass } from '../../shared/http-status';
 
-export type TypeFilter = 'all' | 'query' | 'mutation' | 'subscription' | 'errors' | 'success';
+export type TypeFilter = 'all' | 'operation' | 'subscription' | 'rest' | 'errors' | 'success';
 export type StatusFilter = 'all' | '2xx' | '3xx' | '4xx' | '5xx';
 
 export interface Filters {
@@ -22,7 +22,7 @@ export const isSuccess = (r: GraphQLRequest): boolean =>
 const escapeRegExp = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
 function matchesText(r: GraphQLRequest, re: RegExp): boolean {
-  if (re.test(r.url)) return true;
+  if (re.test(r.url) || (r.requestBody && re.test(r.requestBody))) return true;
   for (const o of r.operations) {
     if (re.test(o.name) || (o.query && re.test(o.query))) return true;
     if (o.variables !== undefined && re.test(JSON.stringify(o.variables) ?? '')) return true;
@@ -46,8 +46,14 @@ export function filterRequests(requests: GraphQLRequest[], f: Filters): GraphQLR
         break;
       case 'all':
         break;
-      default:
-        if (!r.operations.some((o) => o.operationType === f.type)) return false;
+      case 'rest':
+        if (r.kind !== 'rest') return false;
+        break;
+      case 'operation': // queries and mutations, plus persisted ones whose type is unknown
+        if (r.kind === 'rest' || r.operations.every((o) => o.operationType === 'subscription')) return false;
+        break;
+      case 'subscription':
+        if (r.kind === 'rest' || !r.operations.some((o) => o.operationType === 'subscription')) return false;
     }
     return !re || matchesText(r, re);
   });

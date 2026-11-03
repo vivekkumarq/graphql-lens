@@ -13,7 +13,7 @@ The extension itself is published **free** for everyone. Both stores take the **
 
 ## Package
 
-- File: `release/graphql-lens-1.0.0.zip` (manifest V3, about 230 kB)
+- File: `release/graphql-lens-1.1.0.zip` (manifest V3, about 230 kB)
 - Category: **Developer Tools**
 - Language: English
 
@@ -24,17 +24,17 @@ GraphQL Lens
 ## Summary / short description (max 132 characters)
 
 ```
-Inspect GraphQL in DevTools: queries, mutations, subscriptions, variables, errors, batching, replay and cURL. Private, 100% local.
+Inspect GraphQL and REST API calls in DevTools: queries, mutations, subscriptions, errors, batching, replay, cURL. 100% local.
 ```
 
-(130 characters)
+(126 characters)
 
 ## Detailed description
 
 Paste ONLY the text inside this box into the Description field. Do not add keyword lists; Chrome rejects them as spam (violation "Yellow Argon").
 
 ```
-GraphQL Lens adds a GraphQL panel to DevTools. Every query, mutation and subscription the page sends gets its own row, named after its operation, so you never have to dig through a wall of identical "POST /graphql" rows in the Network panel again.
+GraphQL Lens adds an API panel to DevTools. Every GraphQL query, mutation and subscription the page sends gets its own row, named after its operation, so you never have to dig through a wall of identical "POST /graphql" rows in the Network panel again. REST calls (fetch/XHR) are listed right alongside, so one panel shows every API call the page makes.
 
 INSPECT
 • Query viewer with syntax highlighting, line numbers, folding and search
@@ -50,17 +50,22 @@ UNDERSTANDS REAL-WORLD GRAPHQL
 • Batched requests, split per operation with errors attributed to the right one
 • Subscriptions over WebSocket (graphql-ws and subscriptions-transport-ws) and server-sent events
 • @defer / @stream incremental responses
-• Ignores ordinary JSON APIs that just happen to have a "query" field
+• Never mistakes an ordinary JSON API with a "query" field for GraphQL
+
+REST CALLS TOO
+• Every fetch/XHR API call is listed with an R badge, next to the Q, M and S GraphQL badges
+• Query parameters, request body, response, headers, timing and replay for each call
+• Can be switched off in Settings for a GraphQL-only list
 
 ACT ON IT
 • Edit & replay: change the query, variables or headers and resend from the page
 • Copy as cURL or fetch(), with credentials redacted unless you confirm
-• Copy query, variables, response, URL or operation name
+• Copy query, variables, query + variables together, response, request body, URL or operation name
 • Export as HAR or GraphQL JSON; import HAR files from any browser or bug report
 
 FIND IT FAST
-• Search across operation names, queries, variables, responses and URLs
-• Filter by Queries, Mutations, Subscriptions, Errors, Successful, and HTTP status class
+• Search across operation names, queries, variables, request and response bodies and URLs
+• Filter by REST + GQL, Queries & Mutations, Subscriptions, REST, Errors, Successful, and HTTP status class
 • Keyboard shortcuts, record/pause, preserve log, light and dark themes
 
 FAST AND PRIVATE
@@ -68,7 +73,7 @@ FAST AND PRIVATE
 • No analytics, no telemetry, no servers. Your traffic never leaves your machine.
 • Only one permission: storage, for your settings.
 
-How to use: install, open DevTools (F12) on any site that uses GraphQL, and pick the "GraphQL Lens" tab (it may be under the » menu). Requests made before DevTools was opened are not recorded; reload the page to capture them.
+How to use: install, open DevTools (F12) on any site that uses GraphQL or REST APIs, and pick the "GraphQL Lens" tab (it may be under the » menu). Requests made before DevTools was opened are not recorded; reload the page to capture them.
 ```
 
 ## Graphic assets (all in `store-assets/`, regenerate with `npm run screenshots`)
@@ -82,7 +87,7 @@ How to use: install, open DevTools (F12) on any site that uses GraphQL, and pick
 
 Screenshot captions:
 
-1. Every operation gets its own row, with the query and its structure side by side.
+1. Every GraphQL operation (Q, M, S) and REST call (R) gets its own row, with the query and its structure side by side.
 2. GraphQL errors are front and centre, with code, path and location.
 3. Batched requests are split per operation.
 4. Edit a query or variables and replay it from the page.
@@ -93,7 +98,7 @@ Screenshot captions:
 **Single purpose**
 
 ```
-Show the GraphQL requests a web page makes, and their responses, in a DevTools panel so developers can inspect and debug them.
+Show the GraphQL and REST API requests a web page makes, and their responses, in a DevTools panel so developers can inspect and debug them.
 ```
 
 **Permission justification: storage**

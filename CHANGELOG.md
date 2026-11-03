@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.1.0 (2026-11-03)
+
+- **REST calls**: every fetch/XHR request that is not GraphQL is listed too, with an **R** badge and a **Request** tab (query parameters and body). Can be turned off in Settings.
+- Filters: **All** is now **REST + GQL**; **Queries** and **Mutations** are one **Queries & Mutations** filter (the **Q** / **M** badge tells them apart, persisted queries included); new **REST** filter.
+- Copy **query + variables** together as a GraphQL request body; copy a REST call's request body.
+- Search also matches request bodies.
+- Larger, easier-to-read text and rows in the list and details.
+- New store artwork.
+
 ## 1.0.0 (2026-10-31)
 
 First public release.

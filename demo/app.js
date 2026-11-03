@@ -256,15 +256,15 @@ const scenarios = {
     () => post({ operationName: 'SlowReport', query: 'query SlowReport { slow(ms: 1500) }' }),
   ],
   notGraphql: [
-    'Not GraphQL',
-    'Plain JSON API with a "query" field: must be ignored',
+    'REST call',
+    'Plain JSON API with a "query" field: listed as REST, not GraphQL',
     async () => {
       const r = await fetch('/api/search', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({ query: 'shoes', page: 1 }),
       });
-      log(`${r.status} /api/search (ignored by GraphQL Lens)`);
+      log(`${r.status} /api/search (REST, not GraphQL)`);
     },
   ],
   burst: [

@@ -10,6 +10,7 @@ export interface Settings {
   formatQueries: boolean;
   maxResponseMB: number;
   captureWebSockets: boolean;
+  captureRest: boolean; // plain fetch/XHR API calls next to GraphQL
 }
 
 export const DEFAULT_SETTINGS: Settings = {
@@ -22,6 +23,7 @@ export const DEFAULT_SETTINGS: Settings = {
   formatQueries: true,
   maxResponseMB: 10,
   captureWebSockets: true,
+  captureRest: true,
 };
 
 const clamp = (v: unknown, min: number, max: number, fallback: number) =>
@@ -43,6 +45,7 @@ export function sanitizeSettings(raw: unknown): Settings {
     formatQueries: bool(r.formatQueries, d.formatQueries),
     maxResponseMB: clamp(r.maxResponseMB, 1, 100, d.maxResponseMB),
     captureWebSockets: bool(r.captureWebSockets, d.captureWebSockets),
+    captureRest: bool(r.captureRest, d.captureRest),
   };
 }
 

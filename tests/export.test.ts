@@ -146,15 +146,27 @@ describe('filterRequests', () => {
       { id: 'c', status: 500, response: loaded('{"errors":[{"message":"x"}]}', 1) },
     ),
     req({ query: 'subscription OnTick { tick }' }, { id: 'd', status: 404, response: loaded('') }),
+    req(
+      { query: '{ x }' },
+      {
+        id: 'e',
+        kind: 'rest',
+        operations: [{ index: 0, name: '/api/cart' }],
+        requestBody: '{"sku":"shoe-42"}',
+        response: loaded('{"errors":[]}'),
+      },
+    ),
+    req({ extensions: { persistedQuery: { sha256Hash: 'abc' } } }, { id: 'f', response: loaded('{}') }),
   ];
   const ids = (f: Partial<Parameters<typeof filterRequests>[1]>) =>
     filterRequests(all, { text: '', type: 'all', status: 'all', ...f }).map((r) => r.id);
 
   it('filters by type, outcome and status class', () => {
-    expect(ids({ type: 'mutation' })).toEqual(['b']);
+    expect(ids({ type: 'operation' })).toEqual(['a', 'b', 'c', 'f']); // persisted (unknown type) too
     expect(ids({ type: 'subscription' })).toEqual(['d']);
+    expect(ids({ type: 'rest' })).toEqual(['e']);
     expect(ids({ type: 'errors' })).toEqual(['c', 'd']);
-    expect(ids({ type: 'success' })).toEqual(['a', 'b']);
+    expect(ids({ type: 'success' })).toEqual(['a', 'b', 'e', 'f']);
     expect(ids({ status: '5xx' })).toEqual(['c']);
     expect(ids({ status: '4xx' })).toEqual(['d']);
   });
@@ -163,7 +175,8 @@ describe('filterRequests', () => {
     expect(ids({ text: 'createuser' })).toEqual(['b']);
     expect(ids({ text: 'VIVEK@' })).toEqual(['b']);
     expect(ids({ text: 'needle' })).toEqual(['a']);
-    expect(ids({ text: 'api.example.com' })).toHaveLength(4);
+    expect(ids({ text: 'shoe-42' })).toEqual(['e']); // request bodies
+    expect(ids({ text: 'api.example.com' })).toHaveLength(6);
     expect(ids({ text: '(' })).toEqual([]); // regex characters are literal
   });
 });

@@ -1,6 +1,6 @@
 {
   "name": "graphql-lens",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "private": true,
   "description": "Inspect. Debug. Understand GraphQL traffic.",
   "license": "MIT",
@@ -15,6 +15,7 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "demo": "node demo/server.mjs",
+    "showcase": "npm run build && node scripts/showcase.mjs",
     "e2e": "npm run build && node scripts/e2e.mjs chrome --real",
     "e2e:edge": "npm run build && node scripts/e2e.mjs edge --real",
     "screenshots": "npm run build && node scripts/e2e.mjs chrome --screenshots && node scripts/promo.mjs",

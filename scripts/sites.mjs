@@ -98,12 +98,13 @@ try {
       if (!all[i]) break;
       await all[i].click();
       await panel.waitForSelector('.details');
-      for (const label of ['Query', 'Variables', 'Response', 'Headers', 'Timing', 'Raw']) {
+      for (const label of ['Query', 'Variables', 'Request', 'Response', 'Headers', 'Timing', 'Raw']) {
         const idx = await panel.$$eval(
           '.tabs button',
           (b, l) => b.findIndex((x) => x.textContent?.startsWith(l)),
           label,
         );
+        if (idx < 0) continue; // REST rows have Request instead of Query/Variables
         await (await panel.$$('.tabs button'))[idx].click();
         await sleep(label === 'Response' ? 900 : 200);
         const body = await panel.$eval('.tab-body', (e) => e.textContent ?? '');
@@ -116,7 +117,7 @@ try {
     const ok = rows.length > 0 && problems.length === 0 && panelErrors.length === 0;
     if (!ok) failures++;
     console.log(
-      `  ${ok ? '✓' : '✗'} ${rows.length ? `${n} request(s) opened in every tab` : 'no GraphQL captured'}`,
+      `  ${ok ? '✓' : '✗'} ${rows.length ? `${n} request(s) opened in every tab` : 'nothing captured'}`,
     );
     for (const p of problems) console.log(`    problem: ${p}`);
     for (const e of panelErrors) console.log(`    panel error: ${e.slice(0, 200)}`);

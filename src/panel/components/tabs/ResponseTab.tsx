@@ -83,7 +83,7 @@ export function ResponseTab({
   const events = req.events;
   return (
     <div className="response">
-      {view.errors.length > 0 && <ErrorList errors={view.errors} req={req} />}
+      {view.errors.length > 0 && req.kind !== 'rest' && <ErrorList errors={view.errors} req={req} />}
       {view.parseError && (
         <div className="banner warn">
           <strong>Unable to parse response.</strong> {view.parseError}.{' '}

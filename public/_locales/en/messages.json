@@ -7,6 +7,6 @@
     "message": "GraphQL Lens"
   },
   "appDescription": {
-    "message": "Inspect GraphQL in DevTools: queries, mutations, subscriptions, variables, errors, batching, replay and cURL. Private, 100% local."
+    "message": "Inspect GraphQL and REST API calls in DevTools: queries, mutations, subscriptions, errors, batching, replay, cURL. 100% local."
   }
 }

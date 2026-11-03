@@ -4,11 +4,21 @@ import { Icon } from './Icon';
 
 const LETTER: Record<OperationType, string> = { query: 'Q', mutation: 'M', subscription: 'S' };
 
-export function TypeBadge({ type, persisted }: { type?: OperationType; persisted?: boolean }) {
-  const label = type ?? (persisted ? 'persisted' : 'unknown');
+/** Q / M / S for GraphQL, P for a persisted query of unknown type, R for a REST call. */
+export function TypeBadge({
+  type,
+  persisted,
+  rest,
+}: {
+  type?: OperationType;
+  persisted?: boolean;
+  rest?: boolean;
+}) {
+  const label = rest ? 'rest' : (type ?? (persisted ? 'persisted' : 'unknown'));
+  const title = rest ? 'REST call' : `GraphQL ${label}`;
   return (
-    <span className={`type-badge t-${label}`} title={label} aria-label={label}>
-      {type ? LETTER[type] : persisted ? 'P' : '?'}
+    <span className={`type-badge t-${label}`} title={title} aria-label={title}>
+      {rest ? 'R' : type ? LETTER[type] : persisted ? 'P' : '?'}
     </span>
   );
 }
@@ -16,7 +26,8 @@ export function TypeBadge({ type, persisted }: { type?: OperationType; persisted
 /** Status is always icon + text, never colour alone. */
 export function StatusBadge({ req, compact = false }: { req: GraphQLRequest; compact?: boolean }) {
   const cls = statusClass(req.status);
-  const gqlErrors = req.response.state === 'loaded' ? req.response.summary.errorCount : 0;
+  const gqlErrors =
+    req.response.state === 'loaded' && req.kind !== 'rest' ? req.response.summary.errorCount : 0;
   const httpBad = cls === 'failed' || cls === '4xx' || cls === '5xx';
   const tone = httpBad ? 'bad' : gqlErrors ? 'warn' : req.response.state === 'pending' ? 'pending' : 'good';
   const text =

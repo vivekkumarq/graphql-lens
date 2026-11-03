@@ -1,7 +1,7 @@
 :root {
   --sans: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
   --mono: ui-monospace, 'Cascadia Code', 'SF Mono', Menlo, Consolas, monospace;
-  --code-size: 12px;
+  --code-size: 13px;
   --bg: #ffffff;
   --bg-2: #f6f8fa;
   --bg-3: #eef1f4;
@@ -43,6 +43,7 @@
   --q: #1a7f37;
   --m: #8250df;
   --s: #c2560b;
+  --r: #0969da;
   color-scheme: light;
 }
 
@@ -88,6 +89,7 @@
   --q: #4ac26b;
   --m: #b392f0;
   --s: #f0883e;
+  --r: #58a6ff;
   color-scheme: dark;
 }
 
@@ -103,7 +105,7 @@ body,
 body {
   background: var(--bg);
   color: var(--fg);
-  font: 12px/1.4 var(--sans);
+  font: 13px/1.45 var(--sans);
   overflow: hidden;
 }
 button,
@@ -119,7 +121,7 @@ kbd,
   font-family: var(--mono);
 }
 kbd {
-  font-size: 10px;
+  font-size: 11px;
   padding: 0 4px;
   border: 1px solid var(--line-strong);
   border-bottom-width: 2px;
@@ -131,7 +133,7 @@ kbd {
   color: var(--muted);
 }
 .small {
-  font-size: 11px;
+  font-size: 12px;
 }
 .pad {
   padding: 12px;
@@ -319,7 +321,7 @@ kbd {
   border-radius: 8px;
   background: var(--bad);
   color: #fff;
-  font-size: 10px;
+  font-size: 11px;
 }
 .toolbar select,
 .setting select,
@@ -377,11 +379,11 @@ kbd {
 .list-head,
 .row {
   display: grid;
-  grid-template-columns: minmax(150px, 2.4fr) 78px 66px 72px 94px minmax(100px, 2fr);
+  grid-template-columns: minmax(160px, 2.4fr) 82px 70px 76px 106px minmax(100px, 2fr);
   align-items: center;
 }
 .list-head {
-  height: 24px;
+  height: 28px;
   border-bottom: 1px solid var(--line);
   background: var(--bg-2);
   color: var(--muted);
@@ -419,7 +421,7 @@ kbd {
   left: 0;
   right: 0;
   top: 0;
-  height: 24px;
+  height: 28px;
   cursor: default;
   user-select: none;
   border-bottom: 1px solid color-mix(in srgb, var(--line) 50%, transparent);
@@ -448,12 +450,12 @@ kbd {
   font-weight: 600;
   color: var(--fg);
   margin-right: 5px;
-  font-size: 11px;
+  font-size: 12px;
 }
 .batch,
 .transport {
   flex: none;
-  font-size: 10px;
+  font-size: 11px;
   padding: 0 5px;
   border-radius: 8px;
   background: var(--bg-3);
@@ -488,10 +490,10 @@ kbd {
   flex: none;
   display: inline-grid;
   place-items: center;
-  width: 16px;
-  height: 16px;
-  border-radius: 3px;
-  font: 700 10px var(--mono);
+  width: 18px;
+  height: 18px;
+  border-radius: 4px;
+  font: 700 11px var(--mono);
   color: #fff;
   background: var(--muted);
 }
@@ -503,6 +505,9 @@ kbd {
 }
 .type-badge.t-subscription {
   background: var(--s);
+}
+.type-badge.t-rest {
+  background: var(--r);
 }
 [data-theme='dark'] .type-badge {
   color: #111;
@@ -549,7 +554,7 @@ kbd {
   opacity: 0.9;
 }
 .empty-title {
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 600;
   margin: 6px 0 0;
   max-width: 460px;
@@ -583,13 +588,13 @@ kbd {
 }
 .details-title h2 {
   margin: 0;
-  font-size: 14px;
+  font-size: 15px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 .op-type {
-  font: 600 10px var(--mono);
+  font: 600 11px var(--mono);
   letter-spacing: 0.06em;
   color: var(--muted);
   border: 1px solid var(--line-strong);
@@ -617,7 +622,7 @@ kbd {
 .details-url {
   margin-top: 4px;
   font-family: var(--mono);
-  font-size: 11px;
+  font-size: 12px;
   color: var(--muted);
   overflow: hidden;
   text-overflow: ellipsis;
@@ -663,7 +668,7 @@ kbd {
   border-radius: 8px;
   background: var(--bad);
   color: #fff;
-  font-size: 10px;
+  font-size: 11px;
   font-weight: 700;
 }
 .tab-body {
@@ -758,13 +763,13 @@ kbd {
   border-radius: 3px;
   background: color-mix(in srgb, var(--bad) 18%, transparent);
   color: var(--bad);
-  font-size: 11px;
+  font-size: 12px;
 }
 .err-meta {
   margin-left: 10px;
   color: var(--muted);
   font-family: var(--mono);
-  font-size: 11px;
+  font-size: 12px;
 }
 
 /* ---------- code views ---------- */
@@ -788,7 +793,7 @@ kbd {
 .code-label {
   font-weight: 600;
   color: var(--muted);
-  font-size: 11px;
+  font-size: 12px;
   text-transform: uppercase;
   letter-spacing: 0.04em;
 }
@@ -873,7 +878,7 @@ kbd {
 }
 .structure dt {
   color: var(--muted);
-  font-size: 11px;
+  font-size: 12px;
 }
 .structure dd {
   margin: 1px 0 0;
@@ -935,7 +940,7 @@ kbd {
   align-items: center;
   gap: 6px;
   margin: 0 0 6px;
-  font-size: 12px;
+  font-size: 13px;
 }
 .kv-table {
   width: 100%;
@@ -1106,7 +1111,7 @@ kbd {
 .dialog header h2 {
   flex: 1;
   margin: 0;
-  font-size: 14px;
+  font-size: 15px;
 }
 .dialog footer {
   justify-content: flex-end;
@@ -1145,7 +1150,7 @@ kbd {
 .setting small {
   display: block;
   color: var(--muted);
-  font-size: 11px;
+  font-size: 12px;
 }
 .setting input[type='number'] {
   width: 90px;

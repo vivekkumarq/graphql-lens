@@ -121,7 +121,11 @@ try {
   const clickByText = async (selector, label) => {
     const i = await panel.$$eval(
       selector,
-      (els, l) => els.findIndex((e) => (e.textContent ?? '').startsWith(l)),
+      (els, l) => {
+        const t = els.map((e) => e.textContent ?? '');
+        const exact = t.findIndex((x) => x.replace(/[\d!]+$/, '') === l); // "REST" vs "REST + GQL"
+        return exact >= 0 ? exact : t.findIndex((x) => x.startsWith(l));
+      },
       label,
     );
     if (i < 0) throw new Error(`${selector} "${label}" not found`);
@@ -172,16 +176,16 @@ try {
   await sleep(200);
   check(
     'empty state shows the onboarding message',
-    (await text('.empty-title')).includes('make a GraphQL request'),
+    (await text('.empty-title')).includes('calls a GraphQL or REST API'),
   );
 
   // ---- capture every scenario ----
   const t0 = Date.now();
   await page.evaluate(() => window.demo.runAll());
-  const total = await until(async () => ((await count()) >= 20 ? count() : 0), 15000);
+  const total = await until(async () => ((await count()) >= 21 ? count() : 0), 15000);
   check(
-    'captures all 20 GraphQL scenarios, including WebSocket',
-    total === 20,
+    'captures all 20 GraphQL scenarios (incl. WebSocket) plus the REST call',
+    total === 21,
     `${total} captured in ${Date.now() - t0} ms`,
   );
 
@@ -212,7 +216,10 @@ try {
   }
   check('every named operation is detected', missing.length === 0, missing.join(', '));
   await search('api/search');
-  check('plain JSON API with a "query" field is not detected', (await count()) === 0);
+  check(
+    'plain JSON API with a "query" field is listed as REST, not GraphQL',
+    (await count()) === 1 && (await text('.row .type-badge')) === 'R',
+  );
   await search('vivek@example.com');
   check('search matches variable values', (await count()) === 1);
   await search('Not authorized to read secret');
@@ -222,11 +229,22 @@ try {
   await chip('Errors');
   const errors = await count();
   check('Errors filter (HTTP 4xx/5xx + GraphQL errors)', errors === 9, `${errors}`);
-  await chip('Mutations');
-  check('Mutations filter', (await count()) === 3, `${await count()}`);
+  await chip('Queries & Mutations');
+  const qm = await count();
+  const letters = new Set(await panel.$$eval('.row .type-badge', (b) => b.map((x) => x.textContent)));
+  check(
+    'Queries & Mutations filter (Q and M badges)',
+    qm === 18 && letters.has('Q') && letters.has('M'),
+    `${qm} ${[...letters]}`,
+  );
   await chip('Subscriptions');
   check('Subscriptions filter (SSE + WebSocket)', (await count()) === 2, `${await count()}`);
-  await chip('All');
+  await chip('REST');
+  check('REST filter', (await count()) === 1, `${await count()}`);
+  await openRow('/api/search');
+  check('REST call shows a Request tab with its body', (await text('.tab-body')).includes('shoes'));
+  await search('');
+  await chip('REST + GQL');
   await panel.select('select[aria-label="HTTP status"]', '4xx');
   await sleep(150);
   check('HTTP status filter 4xx', (await count()) === 5, `${await count()}`);

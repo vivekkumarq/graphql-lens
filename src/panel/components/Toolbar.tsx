@@ -3,10 +3,10 @@ import type { Filters, StatusFilter, TypeFilter } from '../utils/filter';
 import { Icon } from './Icon';
 
 const TYPES: { id: TypeFilter; label: string }[] = [
-  { id: 'all', label: 'All' },
-  { id: 'query', label: 'Queries' },
-  { id: 'mutation', label: 'Mutations' },
+  { id: 'all', label: 'REST + GQL' },
+  { id: 'operation', label: 'Queries & Mutations' },
   { id: 'subscription', label: 'Subscriptions' },
+  { id: 'rest', label: 'REST' },
   { id: 'errors', label: 'Errors' },
   { id: 'success', label: 'Successful' },
 ];
@@ -35,7 +35,7 @@ export function Toolbar({ searchRef, ...p }: Props) {
       <div className="toolbar-row">
         <button
           className={`icon-btn record ${p.recording ? 'on' : ''}`}
-          title={p.recording ? 'Stop recording (Ctrl+E)' : 'Record GraphQL traffic (Ctrl+E)'}
+          title={p.recording ? 'Stop recording (Ctrl+E)' : 'Record GraphQL and REST traffic (Ctrl+E)'}
           aria-pressed={p.recording}
           onClick={() => p.onRecording(!p.recording)}
         >
@@ -50,7 +50,7 @@ export function Toolbar({ searchRef, ...p }: Props) {
           <input
             ref={searchRef}
             type="search"
-            placeholder="Search operations, queries, variables, responses, URLs"
+            placeholder="Search names, queries, variables, bodies, responses, URLs"
             aria-label="Search requests"
             value={p.filters.text}
             onChange={(e) => set({ text: e.target.value })}
@@ -95,7 +95,7 @@ export function Toolbar({ searchRef, ...p }: Props) {
         </button>
       </div>
       <div className="toolbar-row filters">
-        <div className="chips" role="radiogroup" aria-label="Operation type">
+        <div className="chips" role="radiogroup" aria-label="Request type">
           {TYPES.map((t) => (
             <button
               key={t.id}

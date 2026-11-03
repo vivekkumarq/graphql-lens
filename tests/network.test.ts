@@ -47,8 +47,29 @@ describe('normalizeEntry', () => {
     expect(normalizeEntry(sse, 's')?.transport).toBe('sse');
   });
 
-  it('returns null for non-GraphQL traffic', () => {
+  it('returns null for non-GraphQL traffic unless REST capture is on', () => {
     expect(normalizeEntry(post({ hello: 'world' }), 'n')).toBeNull();
+    const fetchCall = {
+      ...post({ query: 'shoes' }, { url: 'https://shop.test/api/search?q=1' }),
+      _resourceType: 'fetch',
+    };
+    expect(normalizeEntry(fetchCall, 'r', true)).toMatchObject({
+      kind: 'rest',
+      method: 'POST',
+      isBatch: false,
+      operations: [{ index: 0, name: '/api/search' }],
+    });
+    // scripts, images and documents are never API calls
+    expect(normalizeEntry({ ...fetchCall, _resourceType: 'script' }, 's', true)).toBeNull();
+    // HARs from other browsers have no _resourceType: a JSON response counts
+    expect(normalizeEntry(entry({ url: 'https://shop.test/api/items' }), 'h', true)?.kind).toBe('rest');
+    expect(
+      normalizeEntry(entry({ url: 'https://shop.test/', responseType: 'text/html' }), 'x', true),
+    ).toBeNull();
+    // GraphQL still wins when REST capture is on
+    expect(
+      normalizeEntry({ ...post({ query: '{ a }' }), _resourceType: 'fetch' }, 'g', true)?.kind,
+    ).toBeUndefined();
   });
 });
 
@@ -58,6 +79,9 @@ describe('responseStateFor', () => {
     expect(ok).toMatchObject({ state: 'loaded', truncated: false, summary: { errorCount: 1 } });
     const big = await responseStateFor('x'.repeat(2000), 'application/json', 1000);
     expect(big).toMatchObject({ state: 'loaded', truncated: true });
+    // an "errors" key in a REST body is data, not GraphQL errors
+    const rest = await responseStateFor('{"errors":[{"message":"x"}]}', 'application/json', 1000, true);
+    expect(rest).toMatchObject({ summary: { errorCount: 0 } });
   });
 });
 

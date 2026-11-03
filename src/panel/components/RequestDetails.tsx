@@ -13,19 +13,24 @@ import { RawTab, ResponseTab } from './tabs/ResponseTab';
 import { HeadersTab } from './tabs/HeadersTab';
 import { TimingTab } from './tabs/TimingTab';
 import { ReplayTab } from './tabs/ReplayTab';
+import { RequestTab } from './tabs/RequestTab';
 import { ErrorBoundary } from './ErrorBoundary';
 
-export type TabId = 'query' | 'variables' | 'response' | 'raw' | 'headers' | 'timing' | 'replay';
+export type TabId = 'query' | 'variables' | 'request' | 'response' | 'raw' | 'headers' | 'timing' | 'replay';
 
-const TABS: { id: TabId; label: string }[] = [
-  { id: 'query', label: 'Query' },
-  { id: 'variables', label: 'Variables' },
+const COMMON: { id: TabId; label: string }[] = [
   { id: 'response', label: 'Response' },
   { id: 'raw', label: 'Raw' },
   { id: 'headers', label: 'Headers' },
   { id: 'timing', label: 'Timing' },
   { id: 'replay', label: 'Replay' },
 ];
+const GQL_TABS = [
+  { id: 'query', label: 'Query' } as const,
+  { id: 'variables', label: 'Variables' } as const,
+  ...COMMON,
+];
+const REST_TABS = [{ id: 'request', label: 'Request' } as const, ...COMMON];
 
 interface Props {
   req: GraphQLRequest;
@@ -37,15 +42,25 @@ interface Props {
   onExport: () => void;
 }
 
-export function RequestDetails({ req, settings, tab, onTab, onClose, confirm, onExport }: Props) {
+export function RequestDetails({ req, settings, tab: wanted, onTab, onClose, confirm, onExport }: Props) {
   const op = req.operations[0];
+  const rest = req.kind === 'rest';
+  // Query/Variables and Request are the same "what was sent" slot, so switching rows keeps the place.
+  const tab: TabId =
+    rest && (wanted === 'query' || wanted === 'variables')
+      ? 'request'
+      : !rest && wanted === 'request'
+        ? 'query'
+        : wanted;
+  const tabs = rest ? REST_TABS : GQL_TABS;
   const menuId = useId();
   const menu = useRef<HTMLDivElement>(null);
   const [tabsId] = useState(() => `tabs-${Math.random().toString(36).slice(2)}`);
-  const errorCount = req.response.state === 'loaded' ? req.response.summary.errorCount : 0;
+  const errorCount = req.response.state === 'loaded' && !rest ? req.response.summary.errorCount : 0;
 
   const copy = async (
-    what: 'query' | 'variables' | 'response' | 'curl' | 'curl-auth' | 'fetch' | 'name' | 'url',
+    what:
+      'query' | 'variables' | 'both' | 'body' | 'response' | 'curl' | 'curl-auth' | 'fetch' | 'name' | 'url',
   ) => {
     menu.current?.hidePopover();
     const ops = req.operations;
@@ -59,6 +74,15 @@ export function RequestDetails({ req, settings, tab, onTab, onClose, confirm, on
             : prettyJSON(ops.map((o) => o.variables ?? null)),
           'Variables copied',
         );
+      case 'both': {
+        const one = (o: (typeof ops)[number]) => ({ query: o.query ?? '', variables: o.variables ?? {} });
+        return copyText(
+          prettyJSON(ops.length === 1 ? one(ops[0]!) : ops.map(one)),
+          'Query + variables copied',
+        );
+      }
+      case 'body':
+        return copyText(req.requestBody ?? '', 'Request body copied');
       case 'response':
         return copyText(req.response.state === 'loaded' ? req.response.body : '', 'Response copied');
       case 'curl':
@@ -84,10 +108,14 @@ export function RequestDetails({ req, settings, tab, onTab, onClose, confirm, on
     <section className="details" aria-label="Request details">
       <div className="details-head">
         <div className="details-title">
-          <TypeBadge type={op?.operationType} persisted={!!op?.persistedQueryHash} />
+          <TypeBadge
+            type={op?.operationType}
+            persisted={!!op?.persistedQueryHash}
+            rest={req.kind === 'rest'}
+          />
           <h2 title={op?.name}>{req.isBatch ? `Batch of ${req.operations.length} operations` : op?.name}</h2>
           <span className="op-type">
-            {req.isBatch ? 'BATCH' : (op?.operationType ?? 'unknown').toUpperCase()}
+            {rest ? 'REST' : req.isBatch ? 'BATCH' : (op?.operationType ?? 'unknown').toUpperCase()}
           </span>
           <span className="spacer" />
           <button
@@ -102,12 +130,23 @@ export function RequestDetails({ req, settings, tab, onTab, onClose, confirm, on
             <Icon name="copy" /> <span className="btn-label">Copy</span> <Icon name="chevron" size={10} />
           </button>
           <div className="menu" id={menuId} popover="auto" ref={menu} role="menu">
-            <button role="menuitem" onClick={() => copy('query')}>
-              Copy query
-            </button>
-            <button role="menuitem" onClick={() => copy('variables')}>
-              Copy variables
-            </button>
+            {rest ? (
+              <button role="menuitem" onClick={() => copy('body')} disabled={!req.requestBody}>
+                Copy request body
+              </button>
+            ) : (
+              <>
+                <button role="menuitem" onClick={() => copy('query')}>
+                  Copy query
+                </button>
+                <button role="menuitem" onClick={() => copy('variables')}>
+                  Copy variables
+                </button>
+                <button role="menuitem" onClick={() => copy('both')}>
+                  Copy query + variables
+                </button>
+              </>
+            )}
             <button
               role="menuitem"
               onClick={() => copy('response')}
@@ -126,9 +165,11 @@ export function RequestDetails({ req, settings, tab, onTab, onClose, confirm, on
               Copy as fetch()
             </button>
             <hr />
-            <button role="menuitem" onClick={() => copy('name')}>
-              Copy operation name
-            </button>
+            {!rest && (
+              <button role="menuitem" onClick={() => copy('name')}>
+                Copy operation name
+              </button>
+            )}
             <button role="menuitem" onClick={() => copy('url')}>
               Copy URL
             </button>
@@ -167,7 +208,7 @@ export function RequestDetails({ req, settings, tab, onTab, onClose, confirm, on
         </div>
       </div>
       <div className="tabs" role="tablist" aria-label="Request detail tabs">
-        {TABS.map((t) => (
+        {tabs.map((t) => (
           <button
             key={t.id}
             role="tab"
@@ -195,6 +236,7 @@ export function RequestDetails({ req, settings, tab, onTab, onClose, confirm, on
           key={`${req.id}-${tab}`}
           body={req.response.state === 'loaded' ? req.response.body : undefined}
         >
+          {tab === 'request' && <RequestTab req={req} settings={settings} />}
           {tab === 'query' && <QueryTab req={req} settings={settings} />}
           {tab === 'variables' && <VariablesTab req={req} settings={settings} />}
           {tab === 'response' && <ResponseTab req={req} settings={settings} onRaw={() => onTab('raw')} />}

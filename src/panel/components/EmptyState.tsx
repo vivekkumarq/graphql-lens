@@ -25,7 +25,7 @@ export function EmptyState({
   return (
     <div className="empty">
       <img src="icons/128.png" alt="" width="64" height="64" />
-      <p className="empty-title">Open a page and make a GraphQL request to start inspecting traffic.</p>
+      <p className="empty-title">Open a page that calls a GraphQL or REST API to start inspecting traffic.</p>
       <p className="muted">
         {recording
           ? 'Requests sent before DevTools opened are not recorded. Reload the page to capture them.'
@@ -41,7 +41,7 @@ export function EmptyState({
       </div>
       <p className="muted small">
         Detects GraphQL by payload (POST, GET, batching, persisted queries, uploads, SSE, WebSocket and
-        @defer), not by URL.
+        @defer), not by URL. Every other fetch/XHR call is listed as REST.
       </p>
     </div>
   );

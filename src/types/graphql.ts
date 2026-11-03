@@ -92,6 +92,7 @@ export interface StreamEvent {
 
 export interface GraphQLRequest {
   id: string;
+  kind?: 'rest'; // a plain fetch/XHR API call; absent = GraphQL (also for history saved by 1.0)
   url: string;
   method: string;
   status: number;

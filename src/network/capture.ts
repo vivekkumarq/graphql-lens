@@ -14,6 +14,7 @@ export interface CaptureOptions {
   isRecording(): boolean;
   maxResponseBytes(): number;
   captureWebSockets(): boolean;
+  captureRest(): boolean;
   isPanelVisible(): boolean;
 }
 
@@ -31,6 +32,7 @@ export async function responseStateFor(
   body: string,
   contentType: string,
   maxBytes: number,
+  rest = false,
 ): Promise<ResponseState> {
   const t = truncateBody(body, maxBytes);
   if (t.truncated) {
@@ -48,7 +50,10 @@ export async function responseStateFor(
     };
   }
   try {
-    return { state: 'loaded', body, truncated: false, summary: await analyzeSummary(body, contentType) };
+    const summary = await analyzeSummary(body, contentType);
+    // an "errors" key in a REST body is just data, not GraphQL errors
+    if (rest) Object.assign(summary, { errorCount: 0, firstError: undefined });
+    return { state: 'loaded', body, truncated: false, summary };
   } catch (e) {
     return { state: 'failed', message: `Unable to parse response: ${String(e)}` };
   }
@@ -73,14 +78,17 @@ export function startCapture(sink: CaptureSink, opts: CaptureOptions): () => voi
         if (opts.captureWebSockets()) handleWebSocket(entry);
         return;
       }
-      const req = normalizeEntry(entry, nextRequestId());
+      const req = normalizeEntry(entry, nextRequestId(), opts.captureRest());
       if (!req) return;
       sink.upsert(req);
       const contentType = responseContentType(entry);
       const done = (content: string | null | undefined, encoding?: string | null) => {
-        void responseStateFor(decodeBody(content, encoding), contentType, opts.maxResponseBytes()).then(
-          (response) => sink.patch(req.id, { response }),
-        );
+        void responseStateFor(
+          decodeBody(content, encoding),
+          contentType,
+          opts.maxResponseBytes(),
+          req.kind === 'rest',
+        ).then((response) => sink.patch(req.id, { response }));
       };
       if (entry.response.content?.text !== undefined)
         done(entry.response.content.text, entry.response.content.encoding);
@@ -122,6 +130,7 @@ export async function importHarEntries(
   entries: HarEntryLike[],
   sink: CaptureSink,
   maxBytes: number,
+  rest: boolean,
 ): Promise<number> {
   let count = 0;
   const ws: WsTracker = new Map();
@@ -134,12 +143,14 @@ export async function importHarEntries(
         }
         continue;
       }
-      const req = normalizeEntry(entry, nextRequestId());
+      const req = normalizeEntry(entry, nextRequestId(), rest);
       if (!req) continue;
       count++;
       sink.upsert(req);
       const body = decodeBody(entry.response.content?.text, entry.response.content?.encoding);
-      sink.patch(req.id, { response: await responseStateFor(body, responseContentType(entry), maxBytes) });
+      sink.patch(req.id, {
+        response: await responseStateFor(body, responseContentType(entry), maxBytes, req.kind === 'rest'),
+      });
     } catch (e) {
       console.warn('[GraphQL Lens] skipped an imported entry:', e);
     }

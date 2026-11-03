@@ -80,6 +80,7 @@ export function App() {
         isRecording: () => live.current.recording,
         maxResponseBytes: () => live.current.settings.maxResponseMB * 1048576,
         captureWebSockets: () => live.current.settings.captureWebSockets,
+        captureRest: () => live.current.settings.captureRest,
         isPanelVisible: () => live.current.visible,
       });
     let stop: (() => void) | undefined;
@@ -242,11 +243,16 @@ export function App() {
     if (!file) return;
     try {
       const entries = harEntries(JSON.parse(await file.text()));
-      const n = await importHarEntries(entries, store, settings.maxResponseMB * 1048576);
+      const n = await importHarEntries(
+        entries,
+        store,
+        settings.maxResponseMB * 1048576,
+        settings.captureRest,
+      );
       toast(
         n
-          ? `Imported ${n} GraphQL request(s) from ${file.name}`
-          : `No GraphQL requests found in ${file.name}`,
+          ? `Imported ${n} request(s) from ${file.name}`
+          : `No GraphQL or REST requests found in ${file.name}`,
         n ? 'info' : 'error',
       );
     } catch (e) {

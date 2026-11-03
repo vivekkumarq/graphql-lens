@@ -8,7 +8,7 @@ const SHORTCUTS: [string, string][] = [
   ['↑ / ↓, PgUp / PgDn, Home / End', 'Move through requests'],
   ['Ctrl/⌘ + click, Shift + click', 'Select several requests (for export)'],
   ['Delete', 'Remove the selected requests'],
-  ['Ctrl/⌘ + C', 'Copy the selected request’s query (when no text is selected)'],
+  ['Ctrl/⌘ + C', 'Copy the selected query, or a REST call’s URL (when no text is selected)'],
   ['Ctrl+E', 'Start / stop recording'],
   ['Ctrl+F inside a code view', 'Search within that query or response'],
 ];
@@ -108,6 +108,12 @@ export function SettingsDialog({
             hint="Off = auto-clear when the page navigates"
             checked={settings.preserveLog}
             onChange={(v) => onChange({ preserveLog: v })}
+          />
+          <Toggle
+            label="Capture REST API calls"
+            hint="fetch/XHR requests that are not GraphQL, shown with an R badge"
+            checked={settings.captureRest}
+            onChange={(v) => onChange({ captureRest: v })}
           />
           <Toggle
             label="Capture GraphQL over WebSocket"

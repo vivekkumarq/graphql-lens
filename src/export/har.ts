@@ -91,7 +91,7 @@ export function toHar(requests: GraphQLRequest[], opts: ExportOptions) {
           timings: { send: 0, wait: r.duration, receive: 0, ...r.timings },
           ...(r.transport === 'websocket'
             ? { _resourceType: 'websocket', _webSocketMessages: wsMessages(r) }
-            : {}),
+            : { _resourceType: 'fetch' }),
         };
       }),
     },
@@ -119,6 +119,7 @@ export function toJSONExport(requests: GraphQLRequest[], opts: ExportOptions) {
         durationMs: Math.round(r.duration),
         timestamp: new Date(r.timestamp).toISOString(),
         transport: r.transport,
+        kind: r.kind ?? 'graphql',
         operations: r.operations.map((o) => ({
           name: o.operationName ?? null,
           type: o.operationType ?? null,

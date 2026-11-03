@@ -16,7 +16,12 @@ import { formatBytes, formatDuration } from '../../utils/format';
 type Mode = 'operation' | 'get' | 'raw';
 
 function modeOf(req: GraphQLRequest): Mode {
-  if (req.isBatch || req.operations[0]?.parseError === 'Batch item is not a GraphQL operation') return 'raw';
+  if (
+    req.kind === 'rest' ||
+    req.isBatch ||
+    req.operations[0]?.parseError === 'Batch item is not a GraphQL operation'
+  )
+    return 'raw';
   if (req.method === 'GET') return 'get';
   const ct = headerValue(req.requestHeaders, 'content-type') ?? '';
   return ct.includes('json') || ct === '' ? 'operation' : 'raw';
@@ -88,9 +93,10 @@ export function ReplayTab({ req }: { req: GraphQLRequest }) {
       </p>
     );
 
-  const errors = result?.ok
-    ? parseResponse(result.body, headerValue(result.headers, 'content-type')).errors.length
-    : 0;
+  const errors =
+    result?.ok && req.kind !== 'rest'
+      ? parseResponse(result.body, headerValue(result.headers, 'content-type')).errors.length
+      : 0;
 
   return (
     <div className="replay">
@@ -111,7 +117,9 @@ export function ReplayTab({ req }: { req: GraphQLRequest }) {
         </button>
       </div>
       {mode === 'raw' ? (
-        <Code value={raw} onChange={setRaw} language="json" editable label="Request body" height="220px" />
+        req.method === 'GET' || req.method === 'HEAD' ? null : (
+          <Code value={raw} onChange={setRaw} language="json" editable label="Request body" height="220px" />
+        )
       ) : (
         <div className="replay-grid">
           <Code value={query} onChange={setQuery} language="graphql" editable label="Query" height="240px" />

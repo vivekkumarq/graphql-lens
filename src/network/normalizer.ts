@@ -49,19 +49,40 @@ export const responseContentType = (entry: HarEntryLike): string =>
 export const isWebSocketEntry = (entry: HarEntryLike): boolean =>
   entry._resourceType === 'websocket' || /^wss?:/i.test(entry.request.url);
 
-/** HAR entry → normalized GraphQL request, or null when it isn't GraphQL. Never throws. */
-export function normalizeEntry(entry: HarEntryLike, id: string): GraphQLRequest | null {
+/** A fetch/XHR call (Chrome tags them); HARs from other browsers lack the tag, so fall back to a JSON response. */
+export const isApiCall = (entry: HarEntryLike): boolean =>
+  entry._resourceType
+    ? entry._resourceType === 'fetch' || entry._resourceType === 'xhr'
+    : /json/i.test(responseContentType(entry));
+
+/** "/api/users/42" for display; the full URL stays in req.url. */
+function restName(url: string): string {
+  try {
+    const u = new URL(url);
+    return u.pathname === '/' ? u.host : u.pathname;
+  } catch {
+    return url;
+  }
+}
+
+/**
+ * HAR entry → normalized request: GraphQL when the payload is GraphQL, otherwise a REST call
+ * when `rest` is on and it is a fetch/XHR. Null for everything else. Never throws.
+ */
+export function normalizeEntry(entry: HarEntryLike, id: string, rest = false): GraphQLRequest | null {
   let raw;
   try {
     raw = detectGraphQL(entry.request);
   } catch {
-    return null;
+    raw = null;
   }
-  if (!raw) return null;
+  const isRest = !raw && rest && isApiCall(entry);
+  if (!raw && !isRest) return null;
   const ct = responseContentType(entry);
   const size = entry.response._transferSize ?? entry.response.bodySize ?? entry.response.content?.size ?? 0;
   return {
     id,
+    ...(isRest ? { kind: 'rest' as const } : {}),
     url: entry.request.url,
     method: entry.request.method,
     status: entry.response.status,
@@ -74,8 +95,8 @@ export function normalizeEntry(entry: HarEntryLike, id: string): GraphQLRequest 
     requestHeaders: entry.request.headers ?? [],
     responseHeaders: entry.response.headers ?? [],
     requestBody: entry.request.postData?.text,
-    operations: raw.map(analyzeOperation),
-    isBatch: raw.length > 1,
+    operations: raw ? raw.map(analyzeOperation) : [{ index: 0, name: restName(entry.request.url) }],
+    isBatch: !!raw && raw.length > 1,
     response: { state: 'pending' },
     timings: timingsOf(entry.timings),
     httpVersion: entry.response.httpVersion || entry.request.httpVersion,
