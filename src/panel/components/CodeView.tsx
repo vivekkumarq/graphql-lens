@@ -81,12 +81,27 @@ export default function CodeView({
           >
             <Icon name="search" />
           </button>
-          <button className="icon-btn" title="Collapse all" onClick={() => exec(foldAll)}>
-            <Icon name="collapse" />
-          </button>
-          <button className="icon-btn" title="Expand all" onClick={() => exec(unfoldAll)}>
-            <Icon name="expand" />
-          </button>
+          {language !== 'text' && (
+            // plain text has no blocks to fold, so these only appear for JSON and GraphQL
+            <>
+              <button
+                className="icon-btn"
+                title="Collapse all blocks"
+                aria-label="Collapse all blocks"
+                onClick={() => exec(foldAll)}
+              >
+                <Icon name="collapse" />
+              </button>
+              <button
+                className="icon-btn"
+                title="Expand all blocks"
+                aria-label="Expand all blocks"
+                onClick={() => exec(unfoldAll)}
+              >
+                <Icon name="expand" />
+              </button>
+            </>
+          )}
           <button
             className={`icon-btn ${wrap ? 'on' : ''}`}
             title="Wrap long lines"

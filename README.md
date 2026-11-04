@@ -1,8 +1,8 @@
 # GraphQL Lens
 
-**Inspect. Debug. Understand GraphQL & REST traffic.**
+**Inspect. Debug. Understand GraphQL, REST & WebSocket traffic.**
 
-GraphQL Lens adds an API panel to Chrome and Edge DevTools. Every GraphQL query, mutation and subscription the page sends shows up as its own row, named after its operation, with the query, variables, response, errors, headers and timing one click away. Plain REST calls (fetch/XHR) are listed right next to them with an **R** badge, so one panel shows every API call the page makes. No more digging through a wall of identical `POST /graphql` rows in the Network panel.
+GraphQL Lens adds an API panel to Chrome and Edge DevTools. Every GraphQL query, mutation and subscription the page sends shows up as its own row, named after its operation, with the query, variables, response, errors, headers and timing one click away. Plain REST calls (fetch/XHR) are listed right next to them with an **R** badge, and every WebSocket connection with a **W** badge and an event stream of its messages, so one panel shows every API call the page makes. No more digging through a wall of identical `POST /graphql` rows in the Network panel.
 
 ![Query view with operation structure](store-assets/screenshots/1-query-structure.png)
 
@@ -14,12 +14,14 @@ GraphQL Lens adds an API panel to Chrome and Edge DevTools. Every GraphQL query,
 - **REST calls too**: every other fetch/XHR request is listed as **REST** (badge **R**) with its query parameters, request body, response, headers and timing. A JSON API that merely has a `query` field is REST, not GraphQL. Turn it off in ⚙ Settings → _Capture REST API calls_ for a GraphQL-only list.
 - **Batching**: one request with several operations is shown as a batch, each operation collapsible, with errors attributed to the right operation.
 - **Streaming**: GraphQL over **server-sent events**, **WebSocket** (`graphql-transport-ws` and the legacy `subscriptions-transport-ws`) and **`@defer` / `@stream`** multipart responses, shown as an event list (_Initial response_, _Deferred response #1_, …).
+- **WebSockets**: every socket (GraphQL or not) gets a row with an **Event stream** tab listing each sent ↑ and received ↓ message with its time and size. Filter messages, and click one to see it as formatted JSON (binary frames are shown as base64). GraphQL subscriptions on a socket also get their own **S** rows.
 - Requests made before the panel was opened are picked up from DevTools' network log.
 
 **Inspect**
 
 - Query viewer with syntax highlighting, line numbers, folding, in-editor search (Ctrl+F) and line wrapping, using CodeMirror 6.
-- _Formatted_ (canonical reprint) or _As sent_ view of each query.
+- _Formatted_ (canonical reprint) or _As sent_ view of each query, with the **variables shown right under the query**.
+- **Request + Response** tab: what was sent and what came back, side by side (stacked when the pane is narrow).
 - Operation structure from the reference `graphql` parser: type, name, root fields (with aliases), depth, number of fields selected, variable definitions, fragments and directives.
 - Variables tab compares **declared** variables with the **sent** values and flags missing required ones.
 - Response viewer with collapsible JSON and a **GraphQL errors** summary: message, `extensions.code`, path and location.
@@ -29,14 +31,15 @@ GraphQL Lens adds an API panel to Chrome and Edge DevTools. Every GraphQL query,
 **Act**
 
 - **Edit & replay**: change the query, variables or headers and resend from inside the page, so its own cookies, CORS and CSP rules apply.
-- **Copy** query, variables, **query + variables** together (as a GraphQL request body), response, request body, URL, operation name, **cURL** or **`fetch()`**. Credentials are redacted unless you explicitly confirm.
+- **Copy** query, variables, **query + variables** together (as a GraphQL request body), response, request body, **authorization token** (the `Authorization` value without `Bearer`), URL, operation name, **cURL** or **`fetch()`**. Credentials are redacted unless you explicitly confirm.
 - **Export** one request, a multi-selection, the filtered list or everything as **HAR 1.2** or readable **GraphQL JSON**, with credentials redacted by default.
 - **Import** any HAR file (from Chrome, Edge, Firefox or a bug report) and inspect its GraphQL and REST traffic offline.
 
 **Find**
 
-- Global search across operation names, queries, variables, request bodies, response bodies and URLs (debounced, case-insensitive).
-- Filters: **REST + GQL** (everything) / **Queries & Mutations** (tell them apart by the **Q** and **M** badges) / Subscriptions / REST / Errors / Successful, plus HTTP 2xx / 3xx / 4xx / 5xx.
+- Global search across operation names, queries, variables, request bodies, response bodies, WebSocket messages and URLs (debounced, case-insensitive).
+- Filters: **REST + GQL + WS** (everything) / **Queries & Mutations** (tell them apart by the **Q** and **M** badges) / REST / WS / Errors / Successful. The **More filters** dropdown adds Subscriptions, Persisted queries, Batched requests and Slow (over 1 s). Plus HTTP 2xx / 3xx / 4xx / 5xx.
+- The **Stop** / **Record** button pauses and resumes capture (`Ctrl+E`).
 - Record/pause, preserve log across reloads, clear.
 
 **Built to be fast**
@@ -49,12 +52,12 @@ GraphQL Lens adds an API panel to Chrome and Edge DevTools. Every GraphQL query,
 **Comfortable**
 
 - Light, dark, or follow DevTools/system.
-- Keyboard: `/` or `Ctrl+F` search · `Esc` clear search / close details · `↑ ↓ PgUp PgDn Home End` move · `Ctrl/⌘+click` and `Shift+click` multi-select · `Delete` remove · `Ctrl/⌘+C` copy query (URL for REST) · `Ctrl+E` record/pause.
+- Keyboard: `/` or `Ctrl+F` search · `Esc` clear search / close details · `↑ ↓ PgUp PgDn Home End` move · `Ctrl/⌘+click` and `Shift+click` multi-select · `Delete` remove · `Ctrl/⌘+C` copy query (URL for REST and WebSocket rows) · `Ctrl+E` record/pause.
 - Resizable split view that adapts to narrow DevTools windows.
 
-| Errors                                                    | Batching                                       | Replay                                           | Headers (masked)                                           |
-| --------------------------------------------------------- | ---------------------------------------------- | ------------------------------------------------ | ---------------------------------------------------------- |
-| ![errors](store-assets/screenshots/2-response-errors.png) | ![batch](store-assets/screenshots/3-batch.png) | ![replay](store-assets/screenshots/4-replay.png) | ![headers](store-assets/screenshots/5-headers-privacy.png) |
+| Errors                                                    | Request + Response                                                       | WebSocket event stream                                                 | Replay                                           |
+| --------------------------------------------------------- | ------------------------------------------------------------------------ | ---------------------------------------------------------------------- | ------------------------------------------------ |
+| ![errors](store-assets/screenshots/2-response-errors.png) | ![request and response](store-assets/screenshots/3-request-response.png) | ![websocket messages](store-assets/screenshots/4-websocket-events.png) | ![replay](store-assets/screenshots/5-replay.png) |
 
 ## Install
 
@@ -100,29 +103,29 @@ Click **Remove** on the GraphQL Lens card at `chrome://extensions` (or `edge://e
 
 ## How to use it
 
-1. Open the website you want to inspect: your own app, `localhost`, or any site that calls a GraphQL or REST API.
+1. Open the website you want to inspect: your own app, `localhost`, or any site that calls a GraphQL, REST or WebSocket API.
 2. Open DevTools: press **F12**, or **Ctrl+Shift+I** (Windows/Linux) / **⌘⌥I** (macOS), or right-click the page → **Inspect**.
 3. Click the **GraphQL Lens** tab in the DevTools tab bar. If you don't see it, click **»** at the end of the tab bar; drag the tab to the left to keep it visible.
 4. **Reload the page** (F5). Browsers only record network traffic while DevTools is open, so requests sent before you opened DevTools can't be shown. Anything sent while DevTools is open is captured, even if you were on a different DevTools tab at the time.
-5. Use the page normally. Every GraphQL operation and REST call appears as a row:
-   - Badge **Q** query, **M** mutation, **S** subscription, **P** persisted query (only a hash was sent, so the type is unknown), **R** REST call (named after its path, method in the URL column).
+5. Use the page normally. Every GraphQL operation, REST call and WebSocket appears as a row:
+   - Badge **Q** query, **M** mutation, **S** subscription, **P** persisted query (only a hash was sent, so the type is unknown), **R** REST call (named after its path, method in the URL column), **W** WebSocket connection (**WS · N** = N messages so far).
    - **+N** means a batch of N+1 operations in one HTTP request; **WS**, **SSE** and **defer** mark streamed responses.
    - Status shows `✓` success, `⚠` HTTP OK but with GraphQL errors, `⊗` HTTP error or network failure.
-6. Click a row to see its tabs: **Query** (with structure), **Variables**, **Response** (errors on top), **Raw**, **Headers** (credentials masked, eye icon to reveal), **Timing**, and **Replay**. REST calls show **Request** (query parameters and body) in place of Query and Variables.
-7. Use the toolbar to search (press `/`), filter by type, errors or HTTP status, keep requests across reloads (**Preserve log**), pause recording (`Ctrl+E`), clear, import or export HAR files, and open ⚙ **Settings**.
+6. Click a row to see its tabs: **Query** (with structure), **Variables**, **Response** (errors on top), **Raw**, **Headers** (credentials masked, eye icon to reveal), **Timing**, and **Replay**. REST calls show **Request** (query parameters and body) in place of Query and Variables. **Request + Response** shows both sides at once. WebSockets show **Event stream**, Headers and Timing.
+7. Use the toolbar to search (press `/`), filter by type, errors or HTTP status, keep requests across reloads (**Preserve log**), pause recording (**Stop** button or `Ctrl+E`), clear, import or export HAR files, and open ⚙ **Settings**.
 
 ### Troubleshooting
 
-| Problem                                     | Fix                                                                                                                                                                                                                                                 |
-| ------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| No **GraphQL Lens** tab in DevTools         | Close and reopen DevTools after installing. Check **»** at the end of the tab bar. Make sure the extension is switched on at `chrome://extensions`.                                                                                                 |
-| The panel is empty                          | Reload the page with DevTools open. Check that recording isn't paused (red ● in the toolbar), that no search text or filter is active (**REST + GQL** selected, "Any status"), and that the page really calls an API (look in the **Network** tab). |
-| My requests disappear when the page reloads | Tick **Preserve log** in the toolbar.                                                                                                                                                                                                               |
-| A local `file://` page isn't inspected      | At `chrome://extensions` → GraphQL Lens → **Details**, turn on **Allow access to file URLs**.                                                                                                                                                       |
-| Replay fails with "Failed to fetch"         | The replay runs inside the page, so the page's CORS and Content-Security-Policy rules apply. The message explains which one probably blocked it.                                                                                                    |
-| WebSocket subscription events show up late  | WebSocket frames are refreshed every 2 seconds while the panel is visible.                                                                                                                                                                          |
-| A response says it was truncated            | Raise **Maximum response size** in ⚙ Settings (default 10 MB).                                                                                                                                                                                      |
-| The panel is too narrow                     | Drag the divider between the list and the details, or dock DevTools to the bottom (⋮ menu → Dock side).                                                                                                                                             |
+| Problem                                     | Fix                                                                                                                                                                                                                                                                          |
+| ------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| No **GraphQL Lens** tab in DevTools         | Close and reopen DevTools after installing. Check **»** at the end of the tab bar. Make sure the extension is switched on at `chrome://extensions`.                                                                                                                          |
+| The panel is empty                          | Reload the page with DevTools open. Check that recording isn't paused (red ● in the toolbar), that no search text or filter is active (**REST + GQL + WS** selected, "More filters…" and "Any status"), and that the page really calls an API (look in the **Network** tab). |
+| My requests disappear when the page reloads | Tick **Preserve log** in the toolbar.                                                                                                                                                                                                                                        |
+| A local `file://` page isn't inspected      | At `chrome://extensions` → GraphQL Lens → **Details**, turn on **Allow access to file URLs**.                                                                                                                                                                                |
+| Replay fails with "Failed to fetch"         | The replay runs inside the page, so the page's CORS and Content-Security-Policy rules apply. The message explains which one probably blocked it.                                                                                                                             |
+| WebSocket subscription events show up late  | WebSocket frames are refreshed every 2 seconds while the panel is visible.                                                                                                                                                                                                   |
+| A response says it was truncated            | Raise **Maximum response size** in ⚙ Settings (default 10 MB).                                                                                                                                                                                                               |
+| The panel is too narrow                     | Drag the divider between the list and the details, or dock DevTools to the bottom (⋮ menu → Dock side).                                                                                                                                                                      |
 
 ## Try it without a real API
 
@@ -130,7 +133,7 @@ Click **Remove** on the GraphQL Lens card at `chrome://extensions` (or `edge://e
 npm run demo        # http://localhost:4000
 ```
 
-The demo app has a button for every scenario: query, variables + fragments + directives, mutation, GraphQL errors, malformed query, HTTP 401/403/404/500, batching, GET, persisted query, `@defer`, SSE and WebSocket subscriptions, file upload, `application/graphql`, a ~2 MB response, a slow query, a 100-request burst, and a REST JSON API (with a `query` field) that must be listed as REST, not GraphQL.
+The demo app has a button for every scenario: query, variables + fragments + directives, mutation, GraphQL errors, malformed query, HTTP 401/403/404/500, batching, GET, persisted query, `@defer`, SSE and WebSocket subscriptions, file upload, `application/graphql`, a ~2 MB response, a slow query, a 100-request burst, a plain (non-GraphQL) WebSocket price feed with a binary frame, and a REST JSON API (with a `query` field) that must be listed as REST, not GraphQL.
 
 For a real public API, `node scripts/e2e.mjs chrome --real` also queries the public [Countries API](https://countries.trevorblades.com/) and checks the capture.
 
@@ -204,7 +207,7 @@ Key decisions:
 - REST capture lists fetch/XHR calls only. Page loads, scripts, styles, images and fonts are left to the Network panel.
 - DevTools must be open for traffic to be recorded. This is a browser rule for every DevTools extension. Reload the page to capture its initial requests.
 - SSE and `@defer` responses appear when the stream finishes. Chrome gives extensions the body only once the request completes.
-- WebSocket subscriptions update about every 2 seconds (polling), and frames sent before DevTools opened are not available.
+- WebSocket messages update about every 2 seconds (polling), and frames sent before DevTools opened are not available. The latest 2,000 messages per socket are kept.
 - Replay can't resend WebSocket subscriptions or multipart file uploads with their original files. Headers that page scripts may not set (`Cookie`, `Origin`, `User-Agent`, `Sec-*`) are dropped; the browser adds its own.
 - Response bodies larger than the configured limit (10 MB by default) are truncated and shown raw.
 - "Formatted" queries are reprinted by the reference printer, which drops comments. Use _As sent_ to see the original.

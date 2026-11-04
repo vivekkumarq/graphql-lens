@@ -35,6 +35,18 @@ function Structure({ op }: { op: GraphQLOperation }) {
   );
 }
 
+/** The variables sent with an operation, shown under its query. */
+export function SentVariables({ op, settings }: { op: GraphQLOperation; settings: Settings }) {
+  if (op.variables === undefined) return null;
+  return (
+    <Code
+      value={settings.prettyPrint ? prettyJSON(op.variables) : JSON.stringify(op.variables)}
+      language="json"
+      label="Variables"
+    />
+  );
+}
+
 function OperationView({ op, settings }: { op: GraphQLOperation; settings: Settings }) {
   const [formatted, setFormatted] = useState(settings.formatQueries);
   const text = op.query === undefined ? '' : formatted ? formatQuery(op.query) : op.query;
@@ -77,6 +89,7 @@ function OperationView({ op, settings }: { op: GraphQLOperation; settings: Setti
               <Code value={text} language="graphql" label="Query" />
             </>
           )}
+          <SentVariables op={op} settings={settings} />
         </div>
         <Structure op={op} />
       </div>

@@ -15,7 +15,7 @@ const exe =
 
 const dataUrl = (file) => `data:image/png;base64,${fs.readFileSync(file).toString('base64')}`;
 const icon = dataUrl('public/icons/128.png');
-const shot = dataUrl('store-assets/screenshots/2-response-errors.png');
+const shot = dataUrl('store-assets/screenshots/4-websocket-events.png');
 
 const base = `
   * { box-sizing: border-box; margin: 0; }
@@ -33,6 +33,8 @@ const base = `
     border: 1px solid; letter-spacing: .04em; }
   .p-gql { color: #2dd4bf; border-color: #2dd4bf66; background: #2dd4bf14; }
   .p-rest { color: #58a6ff; border-color: #58a6ff66; background: #58a6ff14; }
+  .p-ws { color: #f778ba; border-color: #f778ba66; background: #f778ba14; }
+  .tag u { text-decoration: none; color: #f778ba; font-weight: 700; }
   .win { background: #0d1117ee; border: 1px solid #30363d; border-radius: 10px; overflow: hidden;
     box-shadow: 0 18px 50px rgb(0 0 0 / .55); }
   .bar { display: flex; gap: 5px; padding: 7px 10px; background: #161b22; border-bottom: 1px solid #30363d;
@@ -45,7 +47,7 @@ const base = `
   .row.on { background: #2dd4bf1f; }
   .b { width: 18px; height: 18px; border-radius: 4px; display: grid; place-items: center;
     font-weight: 800; font-size: 11px; color: #0d1117; }
-  .q { background: #4ac26b; } .m { background: #b392f0; } .s { background: #f0883e; } .r { background: #58a6ff; }
+  .q { background: #4ac26b; } .m { background: #b392f0; } .s { background: #f0883e; } .r { background: #58a6ff; } .w { background: #f778ba; }
   .n { color: #e6edf3; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
   .n em { color: #8b949e; font-style: normal; margin-right: 6px; }
   .ok { color: #4ac26b; } .bad { color: #f85149; } .t { color: #8b949e; }
@@ -68,13 +70,13 @@ const small = `<style>${base}
   .win { align-self: end; }
 </style>
 <div class="brand"><img src="${icon}"><div><h1>GraphQL Lens</h1>
-<p class="tag">Inspect <b>GraphQL</b> + <i>REST</i> calls in DevTools</p></div></div>
-<div class="pills"><span class="pill p-gql">QUERIES</span><span class="pill p-gql">MUTATIONS</span><span class="pill p-gql">SUBS</span><span class="pill p-rest">REST API</span></div>
+<p class="tag">Inspect <b>GraphQL</b>, <i>REST</i> &amp; <u>WebSocket</u> calls</p></div></div>
+<div class="pills"><span class="pill p-gql">QUERIES</span><span class="pill p-gql">MUTATIONS</span><span class="pill p-rest">REST API</span><span class="pill p-ws">WEBSOCKET</span></div>
 <div class="win">${rows([
   ['q', 'Q', 'GetUser', 200, '42 ms', true],
   ['m', 'M', 'CreateOrder', 200, '118 ms'],
   ['r', 'R', '<em>GET</em>/api/cart', 200, '35 ms'],
-  ['s', 'S', 'OnPriceChange', 101, 'live'],
+  ['w', 'W', '/live-prices <em>· 128 msgs</em>', 101, 'live'],
 ])}</div>`;
 
 const marquee = `<style>${base}
@@ -93,15 +95,15 @@ const marquee = `<style>${base}
   .stack .b { width: 22px; height: 22px; font-size: 13px; }
 </style>
 <div><div class="brand"><img class="icon" src="${icon}"><h1>GraphQL Lens</h1></div>
-<p class="tag">Inspect <b>GraphQL</b> and <i>REST</i> API calls, right in DevTools.</p>
-<div class="pills"><span class="pill p-gql">Q · QUERIES</span><span class="pill p-gql">M · MUTATIONS</span><span class="pill p-gql">S · SUBSCRIPTIONS</span><span class="pill p-rest">R · REST</span></div>
-<ul><li>GraphQL errors highlighted, batches split apart</li><li>SSE, WebSocket and @defer streams</li><li>Edit & replay, copy as cURL, HAR export</li><li>100% local: no telemetry, ever</li></ul></div>
+<p class="tag">Inspect <b>GraphQL</b>, <i>REST</i> and <u>WebSocket</u> calls, right in DevTools.</p>
+<div class="pills"><span class="pill p-gql">Q · QUERIES</span><span class="pill p-gql">M · MUTATIONS</span><span class="pill p-rest">R · REST</span><span class="pill p-ws">W · WEBSOCKET</span></div>
+<ul><li>Request + Response side by side, errors highlighted</li><li>WebSocket event stream: every message, sent and received</li><li>Edit & replay, copy as cURL, HAR export</li><li>100% local: no telemetry, ever</li></ul></div>
 <div class="stack"><img class="shot" src="${shot}"><div class="win"><div class="bar"><i></i><i></i><i></i><span>GraphQL Lens</span></div>${rows(
   [
     ['q', 'Q', 'GetUser', 200, '42 ms', true],
     ['m', 'M', 'CreateOrder', 200, '118 ms'],
     ['r', 'R', '<em>GET</em>/api/cart', 200, '35 ms'],
-    ['q', 'Q', 'Products', 403, '1.31 s'],
+    ['w', 'W', '/live-prices <em>· 128 msgs</em>', 101, 'live'],
     ['s', 'S', 'OnPriceChange', 101, 'live'],
   ],
 )}</div></div>`;

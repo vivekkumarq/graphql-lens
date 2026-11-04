@@ -6,7 +6,7 @@ GraphQL Lens is a developer tool that runs entirely inside your browser's DevToo
 
 ## What it reads
 
-While you have DevTools open on a tab, GraphQL Lens reads that tab's network traffic through the browser's DevTools API (`chrome.devtools.network`) so it can show you the GraphQL and REST API requests and responses. This includes URLs, headers, request bodies and response bodies, which may contain personal data or credentials belonging to you or the site.
+While you have DevTools open on a tab, GraphQL Lens reads that tab's network traffic through the browser's DevTools API (`chrome.devtools.network`) so it can show you the GraphQL, REST and WebSocket requests, responses and messages. This includes URLs, headers, request bodies and response bodies, which may contain personal data or credentials belonging to you or the site.
 
 ## What it stores
 

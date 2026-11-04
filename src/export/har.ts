@@ -47,6 +47,9 @@ function wsMessages(r: GraphQLRequest) {
 
 /** HAR 1.2, so exports open in Chrome/Edge/Firefox DevTools and can be re-imported here. */
 export function toHar(requests: GraphQLRequest[], opts: ExportOptions) {
+  // A socket's own row already carries its subscriptions' frames; exporting both would duplicate them on import.
+  const sockets = new Set(requests.filter((r) => r.kind === 'ws').map((r) => r.url));
+  requests = requests.filter((r) => r.kind === 'ws' || r.transport !== 'websocket' || !sockets.has(r.url));
   return {
     log: {
       version: '1.2',
@@ -90,7 +93,7 @@ export function toHar(requests: GraphQLRequest[], opts: ExportOptions) {
           cache: {},
           timings: { send: 0, wait: r.duration, receive: 0, ...r.timings },
           ...(r.transport === 'websocket'
-            ? { _resourceType: 'websocket', _webSocketMessages: wsMessages(r) }
+            ? { _resourceType: 'websocket', _webSocketMessages: r.frames ?? wsMessages(r) }
             : { _resourceType: 'fetch' }),
         };
       }),

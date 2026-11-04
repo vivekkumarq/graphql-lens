@@ -116,8 +116,8 @@ export function SettingsDialog({
             onChange={(v) => onChange({ captureRest: v })}
           />
           <Toggle
-            label="Capture GraphQL over WebSocket"
-            hint="graphql-ws and subscriptions-transport-ws"
+            label="Capture WebSocket connections"
+            hint="Every socket with its messages, plus GraphQL subscriptions (graphql-ws, subscriptions-transport-ws)"
             checked={settings.captureWebSockets}
             onChange={(v) => onChange({ captureWebSockets: v })}
           />

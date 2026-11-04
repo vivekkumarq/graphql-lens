@@ -210,12 +210,29 @@ export function startDemoServer(port = 4000) {
   });
 
   // graphql-transport-ws over WebSocket
+  // graphql-transport-ws on /graphql, and a plain JSON price feed on /live-prices
   const wss = new WebSocketServer({
     server,
-    path: '/graphql',
     handleProtocols: (p) => (p.has('graphql-transport-ws') ? 'graphql-transport-ws' : false),
   });
-  wss.on('connection', (ws) => {
+  wss.on('connection', (ws, req) => {
+    if (req.url.startsWith('/live-prices')) {
+      ws.on('message', (raw) => {
+        const msg = JSON.parse(String(raw));
+        if (msg.action !== 'subscribe') return ws.close(1000, 'bye');
+        let n = 0;
+        const timer = setInterval(() => {
+          if (++n > 5) {
+            clearInterval(timer);
+            ws.send(Buffer.from([0xde, 0xad, 0xbe, 0xef])); // one binary frame
+            return;
+          }
+          for (const symbol of msg.symbols)
+            ws.send(JSON.stringify({ type: 'tick', symbol, price: 100 + n * 1.5, seq: n }));
+        }, 80);
+      });
+      return;
+    }
     ws.on('message', async (raw) => {
       let msg;
       try {

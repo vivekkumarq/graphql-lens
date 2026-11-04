@@ -52,8 +52,9 @@ const PATHS = {
     <path d="M2 2l12 12M6.6 3.7A6.6 6.6 0 018 3.5C12 3.5 14.5 8 14.5 8a11 11 0 01-2 2.6M9.4 12.3a6.6 6.6 0 01-1.4.2C4 12.5 1.5 8 1.5 8a11 11 0 012.5-3" />
   ),
   chevron: <path d="M6 4l4 4-4 4" />,
-  collapse: <path d="M4 6l4-3.5L12 6M4 10l4 3.5 4-3.5" transform="rotate(180 8 8)" />,
-  expand: <path d="M4 6l4-3.5L12 6M4 10l4 3.5 4-3.5" />,
+  // arrows pointing at the middle line (fold) vs. away from it (unfold)
+  collapse: <path d="M8 1.5V6M5.5 3.5L8 6l2.5-2.5M2.5 8h11M8 14.5V10M5.5 12.5L8 10l2.5 2.5" />,
+  expand: <path d="M8 6V1.5M5.5 4L8 1.5 10.5 4M2.5 8h11M8 10v4.5M5.5 12L8 14.5l2.5-2.5" />,
   wrap: <path d="M2.5 4h11M2.5 8h9a2 2 0 010 4H8m1.5-1.5L8 12l1.5 1.5M2.5 12H5" />,
   bolt: <path d="M9 1.5L3.5 9H8l-1 5.5L12.5 7H8z" />,
   reload: <path d="M13 8a5 5 0 11-1.5-3.6M13 2.5v3h-3" />,

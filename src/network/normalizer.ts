@@ -56,7 +56,7 @@ export const isApiCall = (entry: HarEntryLike): boolean =>
     : /json/i.test(responseContentType(entry));
 
 /** "/api/users/42" for display; the full URL stays in req.url. */
-function restName(url: string): string {
+export function restName(url: string): string {
   try {
     const u = new URL(url);
     return u.pathname === '/' ? u.host : u.pathname;

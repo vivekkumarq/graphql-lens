@@ -1,6 +1,6 @@
 {
   "name": "graphql-lens",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "private": true,
   "description": "Inspect. Debug. Understand GraphQL traffic.",
   "license": "MIT",

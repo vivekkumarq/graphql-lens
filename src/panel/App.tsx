@@ -201,7 +201,8 @@ export function App() {
       active
     ) {
       e.preventDefault();
-      void copyText(active.operations.map((o) => o.query ?? '').join('\n\n'), 'Query copied');
+      if (active.kind) void copyText(active.url, 'URL copied');
+      else void copyText(active.operations.map((o) => o.query ?? '').join('\n\n'), 'Query copied');
     }
   };
 

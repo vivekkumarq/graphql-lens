@@ -4,21 +4,21 @@ import { Icon } from './Icon';
 
 const LETTER: Record<OperationType, string> = { query: 'Q', mutation: 'M', subscription: 'S' };
 
-/** Q / M / S for GraphQL, P for a persisted query of unknown type, R for a REST call. */
+/** Q / M / S for GraphQL, P for a persisted query of unknown type, R for REST, W for a WebSocket. */
 export function TypeBadge({
   type,
   persisted,
-  rest,
+  kind,
 }: {
   type?: OperationType;
   persisted?: boolean;
-  rest?: boolean;
+  kind?: 'rest' | 'ws';
 }) {
-  const label = rest ? 'rest' : (type ?? (persisted ? 'persisted' : 'unknown'));
-  const title = rest ? 'REST call' : `GraphQL ${label}`;
+  const label = kind ?? type ?? (persisted ? 'persisted' : 'unknown');
+  const title = kind === 'rest' ? 'REST call' : kind === 'ws' ? 'WebSocket connection' : `GraphQL ${label}`;
   return (
     <span className={`type-badge t-${label}`} title={title} aria-label={title}>
-      {rest ? 'R' : type ? LETTER[type] : persisted ? 'P' : '?'}
+      {kind === 'rest' ? 'R' : kind === 'ws' ? 'W' : type ? LETTER[type] : persisted ? 'P' : '?'}
     </span>
   );
 }

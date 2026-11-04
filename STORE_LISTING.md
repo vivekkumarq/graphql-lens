@@ -13,7 +13,7 @@ The extension itself is published **free** for everyone. Both stores take the **
 
 ## Package
 
-- File: `release/graphql-lens-1.1.0.zip` (manifest V3, about 230 kB)
+- File: `release/graphql-lens-1.2.0.zip` (manifest V3, about 230 kB)
 - Category: **Developer Tools**
 - Language: English
 
@@ -24,22 +24,23 @@ GraphQL Lens
 ## Summary / short description (max 132 characters)
 
 ```
-Inspect GraphQL and REST API calls in DevTools: queries, mutations, subscriptions, errors, batching, replay, cURL. 100% local.
+Inspect GraphQL, REST and WebSocket calls in DevTools: queries, mutations, subscriptions, errors, replay, cURL. 100% local.
 ```
 
-(126 characters)
+(123 characters)
 
 ## Detailed description
 
 Paste ONLY the text inside this box into the Description field. Do not add keyword lists; Chrome rejects them as spam (violation "Yellow Argon").
 
 ```
-GraphQL Lens adds an API panel to DevTools. Every GraphQL query, mutation and subscription the page sends gets its own row, named after its operation, so you never have to dig through a wall of identical "POST /graphql" rows in the Network panel again. REST calls (fetch/XHR) are listed right alongside, so one panel shows every API call the page makes.
+GraphQL Lens adds an API panel to DevTools. Every GraphQL query, mutation and subscription the page sends gets its own row, named after its operation, so you never have to dig through a wall of identical "POST /graphql" rows in the Network panel again. REST calls (fetch/XHR) and WebSocket connections are listed right alongside, so one panel shows every API call the page makes.
 
 INSPECT
 • Query viewer with syntax highlighting, line numbers, folding and search
 • Operation structure: type, root fields, depth, field count, variables, fragments, directives
 • Variables: declared vs. sent values, with missing required variables flagged
+• Request + Response side by side, and the variables shown right under the query
 • Response viewer with collapsible JSON and a clear list of GraphQL errors (message, code, path, location)
 • Request and response headers, with Authorization, Cookie and API keys masked by default
 • Timing waterfall: queueing, DNS, connect, TLS, server wait, download
@@ -57,15 +58,20 @@ REST CALLS TOO
 • Query parameters, request body, response, headers, timing and replay for each call
 • Can be switched off in Settings for a GraphQL-only list
 
+WEBSOCKETS
+• Every WebSocket connection gets a row (W badge) with an Event stream of all its messages
+• Sent and received messages with time and size; filter them and open any message as formatted JSON
+• GraphQL subscriptions over WebSocket are also split out per subscription
+
 ACT ON IT
 • Edit & replay: change the query, variables or headers and resend from the page
 • Copy as cURL or fetch(), with credentials redacted unless you confirm
-• Copy query, variables, query + variables together, response, request body, URL or operation name
+• Copy query, variables, query + variables together, response, request body, authorization token, URL or operation name
 • Export as HAR or GraphQL JSON; import HAR files from any browser or bug report
 
 FIND IT FAST
-• Search across operation names, queries, variables, request and response bodies and URLs
-• Filter by REST + GQL, Queries & Mutations, Subscriptions, REST, Errors, Successful, and HTTP status class
+• Search across operation names, queries, variables, request and response bodies, WebSocket messages and URLs
+• Filter by REST + GQL + WS, Queries & Mutations, REST, WS, Errors, Successful, plus Subscriptions, persisted, batched and slow requests, and HTTP status class
 • Keyboard shortcuts, record/pause, preserve log, light and dark themes
 
 FAST AND PRIVATE
@@ -73,7 +79,7 @@ FAST AND PRIVATE
 • No analytics, no telemetry, no servers. Your traffic never leaves your machine.
 • Only one permission: storage, for your settings.
 
-How to use: install, open DevTools (F12) on any site that uses GraphQL or REST APIs, and pick the "GraphQL Lens" tab (it may be under the » menu). Requests made before DevTools was opened are not recorded; reload the page to capture them.
+How to use: install, open DevTools (F12) on any site that uses GraphQL, REST or WebSocket APIs, and pick the "GraphQL Lens" tab (it may be under the » menu). Requests made before DevTools was opened are not recorded; reload the page to capture them.
 ```
 
 ## Graphic assets (all in `store-assets/`, regenerate with `npm run screenshots`)
@@ -87,18 +93,18 @@ How to use: install, open DevTools (F12) on any site that uses GraphQL or REST A
 
 Screenshot captions:
 
-1. Every GraphQL operation (Q, M, S) and REST call (R) gets its own row, with the query and its structure side by side.
+1. Every GraphQL operation (Q, M, S), REST call (R) and WebSocket (W) gets its own row, with the query, variables and structure.
 2. GraphQL errors are front and centre, with code, path and location.
-3. Batched requests are split per operation.
-4. Edit a query or variables and replay it from the page.
-5. Credentials are masked by default; reveal them only when you need to.
+3. See the request and its response side by side.
+4. Every WebSocket message, sent and received, in an event stream.
+5. Edit a query or variables and replay it from the page.
 
 ## Privacy practices tab (Chrome)
 
 **Single purpose**
 
 ```
-Show the GraphQL and REST API requests a web page makes, and their responses, in a DevTools panel so developers can inspect and debug them.
+Show the GraphQL, REST and WebSocket API traffic a web page makes, and their responses, in a DevTools panel so developers can inspect and debug them.
 ```
 
 **Permission justification: storage**

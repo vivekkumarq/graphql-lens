@@ -3,6 +3,12 @@ import type { Header } from '../types/graphql';
 export const headerValue = (headers: Header[] | undefined, name: string): string | undefined =>
   headers?.find((h) => h.name.toLowerCase() === name.toLowerCase())?.value;
 
+/** The credential in the Authorization header without its scheme: "Bearer abc.def" → "abc.def". */
+export function authToken(headers: Header[] | undefined): string | undefined {
+  const v = headerValue(headers, 'authorization')?.trim();
+  return v ? v.replace(/^[A-Za-z][\w-]*\s+(?=\S)/, '') : undefined;
+}
+
 const SENSITIVE_EXACT = new Set([
   'authorization',
   'proxy-authorization',

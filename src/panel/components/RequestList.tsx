@@ -48,7 +48,7 @@ const Row = memo(function Row({
       onMouseDown={(e) => onClick(req.id, e)}
     >
       <span role="gridcell" className="col-name" title={req.operations.map((o) => o.name).join('\n')}>
-        <TypeBadge type={op?.operationType} persisted={!!op?.persistedQueryHash} rest={req.kind === 'rest'} />
+        <TypeBadge type={op?.operationType} persisted={!!op?.persistedQueryHash} kind={req.kind} />
         <span className="name">{op?.name}</span>
         {req.isBatch && (
           <span className="batch" title="Batched request">
@@ -57,7 +57,13 @@ const Row = memo(function Row({
         )}
         {transport && (
           <span className={`transport tr-${transport}`}>
-            {transport === 'websocket' ? 'WS' : transport === 'sse' ? 'SSE' : 'defer'}
+            {transport === 'websocket'
+              ? req.frames
+                ? `WS · ${req.frames.length}`
+                : 'WS'
+              : transport === 'sse'
+                ? 'SSE'
+                : 'defer'}
           </span>
         )}
       </span>

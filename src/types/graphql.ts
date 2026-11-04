@@ -1,3 +1,5 @@
+import type { WsMessage } from '../graphql/subscription-parser';
+
 export type OperationType = 'query' | 'mutation' | 'subscription';
 export type Transport = 'http' | 'sse' | 'multipart' | 'websocket';
 
@@ -92,7 +94,7 @@ export interface StreamEvent {
 
 export interface GraphQLRequest {
   id: string;
-  kind?: 'rest'; // a plain fetch/XHR API call; absent = GraphQL (also for history saved by 1.0)
+  kind?: 'rest' | 'ws'; // a plain fetch/XHR call or a WebSocket connection; absent = GraphQL
   url: string;
   method: string;
   status: number;
@@ -112,4 +114,5 @@ export interface GraphQLRequest {
   httpVersion?: string;
   events?: StreamEvent[]; // websocket subscription messages
   wsProtocol?: string;
+  frames?: WsMessage[]; // every frame of a WebSocket connection row (latest MAX_FRAMES)
 }

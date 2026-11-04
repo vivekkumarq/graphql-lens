@@ -3,6 +3,7 @@ import type { GraphQLRequest } from '../../types/graphql';
 import type { Settings } from '../../storage/settings';
 import { hasCredentials, toCurl, toFetch } from '../../export/curl';
 import { prettyJSON } from '../../graphql/formatter';
+import { authToken } from '../../network/headers';
 import { copyText } from '../utils/clipboard';
 import { formatBytes, formatDuration, formatTime } from '../utils/format';
 import { StatusBadge, TypeBadge } from './Badges';
@@ -14,23 +15,54 @@ import { HeadersTab } from './tabs/HeadersTab';
 import { TimingTab } from './tabs/TimingTab';
 import { ReplayTab } from './tabs/ReplayTab';
 import { RequestTab } from './tabs/RequestTab';
+import { BothTab } from './tabs/BothTab';
+import { EventStreamTab } from './tabs/EventStreamTab';
 import { ErrorBoundary } from './ErrorBoundary';
 
-export type TabId = 'query' | 'variables' | 'request' | 'response' | 'raw' | 'headers' | 'timing' | 'replay';
+export type TabId =
+  | 'query'
+  | 'variables'
+  | 'request'
+  | 'both'
+  | 'response'
+  | 'raw'
+  | 'headers'
+  | 'timing'
+  | 'replay'
+  | 'events';
 
-const COMMON: { id: TabId; label: string }[] = [
+type Tab = { id: TabId; label: string };
+const BOTH: Tab = { id: 'both', label: 'Request + Response' };
+const COMMON: Tab[] = [
   { id: 'response', label: 'Response' },
   { id: 'raw', label: 'Raw' },
   { id: 'headers', label: 'Headers' },
   { id: 'timing', label: 'Timing' },
   { id: 'replay', label: 'Replay' },
 ];
-const GQL_TABS = [
-  { id: 'query', label: 'Query' } as const,
-  { id: 'variables', label: 'Variables' } as const,
-  ...COMMON,
-];
-const REST_TABS = [{ id: 'request', label: 'Request' } as const, ...COMMON];
+const TABS: Record<'graphql' | 'rest' | 'ws', Tab[]> = {
+  graphql: [{ id: 'query', label: 'Query' }, { id: 'variables', label: 'Variables' }, BOTH, ...COMMON],
+  rest: [{ id: 'request', label: 'Request' }, BOTH, ...COMMON],
+  ws: [
+    { id: 'events', label: 'Event stream' },
+    { id: 'headers', label: 'Headers' },
+    { id: 'timing', label: 'Timing' },
+  ],
+};
+
+type CopyWhat =
+  | 'query'
+  | 'variables'
+  | 'both'
+  | 'body'
+  | 'response'
+  | 'messages'
+  | 'curl'
+  | 'curl-auth'
+  | 'fetch'
+  | 'token'
+  | 'name'
+  | 'url';
 
 interface Props {
   req: GraphQLRequest;
@@ -44,24 +76,17 @@ interface Props {
 
 export function RequestDetails({ req, settings, tab: wanted, onTab, onClose, confirm, onExport }: Props) {
   const op = req.operations[0];
-  const rest = req.kind === 'rest';
-  // Query/Variables and Request are the same "what was sent" slot, so switching rows keeps the place.
-  const tab: TabId =
-    rest && (wanted === 'query' || wanted === 'variables')
-      ? 'request'
-      : !rest && wanted === 'request'
-        ? 'query'
-        : wanted;
-  const tabs = rest ? REST_TABS : GQL_TABS;
+  const kind = req.kind ?? 'graphql';
+  const tabs = TABS[kind];
+  // Query, Request and Event stream share the first slot, so switching rows keeps your place.
+  const tab: TabId = tabs.some((t) => t.id === wanted) ? wanted : tabs[0]!.id;
   const menuId = useId();
   const menu = useRef<HTMLDivElement>(null);
   const [tabsId] = useState(() => `tabs-${Math.random().toString(36).slice(2)}`);
-  const errorCount = req.response.state === 'loaded' && !rest ? req.response.summary.errorCount : 0;
+  const errorCount = req.response.state === 'loaded' && !req.kind ? req.response.summary.errorCount : 0;
+  const token = authToken(req.requestHeaders);
 
-  const copy = async (
-    what:
-      'query' | 'variables' | 'both' | 'body' | 'response' | 'curl' | 'curl-auth' | 'fetch' | 'name' | 'url',
-  ) => {
+  const copy = async (what: CopyWhat) => {
     menu.current?.hidePopover();
     const ops = req.operations;
     switch (what) {
@@ -85,6 +110,17 @@ export function RequestDetails({ req, settings, tab: wanted, onTab, onClose, con
         return copyText(req.requestBody ?? '', 'Request body copied');
       case 'response':
         return copyText(req.response.state === 'loaded' ? req.response.body : '', 'Response copied');
+      case 'messages':
+        return copyText(
+          prettyJSON(
+            (req.frames ?? []).map((f) => ({
+              type: f.type === 'send' ? 'sent' : 'received',
+              time: new Date(f.time * 1000).toISOString(),
+              data: f.data,
+            })),
+          ),
+          'Messages copied',
+        );
       case 'curl':
         return copyText(toCurl(req, { includeCredentials: false }), 'cURL copied (credentials redacted)');
       case 'curl-auth':
@@ -97,6 +133,8 @@ export function RequestDetails({ req, settings, tab: wanted, onTab, onClose, con
         return;
       case 'fetch':
         return copyText(toFetch(req, { includeCredentials: false }), 'fetch() copied (credentials redacted)');
+      case 'token':
+        return copyText(token ?? '', 'Authorization token copied');
       case 'name':
         return copyText(ops.map((o) => o.name).join(', '), 'Operation name copied');
       case 'url':
@@ -104,18 +142,26 @@ export function RequestDetails({ req, settings, tab: wanted, onTab, onClose, con
     }
   };
 
+  const item = (what: CopyWhat, label: string, disabled = false, title?: string) => (
+    <button role="menuitem" onClick={() => copy(what)} disabled={disabled} title={title}>
+      {label}
+    </button>
+  );
+
   return (
     <section className="details" aria-label="Request details">
       <div className="details-head">
         <div className="details-title">
-          <TypeBadge
-            type={op?.operationType}
-            persisted={!!op?.persistedQueryHash}
-            rest={req.kind === 'rest'}
-          />
+          <TypeBadge type={op?.operationType} persisted={!!op?.persistedQueryHash} kind={req.kind} />
           <h2 title={op?.name}>{req.isBatch ? `Batch of ${req.operations.length} operations` : op?.name}</h2>
           <span className="op-type">
-            {rest ? 'REST' : req.isBatch ? 'BATCH' : (op?.operationType ?? 'unknown').toUpperCase()}
+            {kind === 'rest'
+              ? 'REST'
+              : kind === 'ws'
+                ? 'WEBSOCKET'
+                : req.isBatch
+                  ? 'BATCH'
+                  : (op?.operationType ?? 'unknown').toUpperCase()}
           </span>
           <span className="spacer" />
           <button
@@ -130,49 +176,36 @@ export function RequestDetails({ req, settings, tab: wanted, onTab, onClose, con
             <Icon name="copy" /> <span className="btn-label">Copy</span> <Icon name="chevron" size={10} />
           </button>
           <div className="menu" id={menuId} popover="auto" ref={menu} role="menu">
-            {rest ? (
-              <button role="menuitem" onClick={() => copy('body')} disabled={!req.requestBody}>
-                Copy request body
-              </button>
-            ) : (
+            {kind === 'graphql' && (
               <>
-                <button role="menuitem" onClick={() => copy('query')}>
-                  Copy query
-                </button>
-                <button role="menuitem" onClick={() => copy('variables')}>
-                  Copy variables
-                </button>
-                <button role="menuitem" onClick={() => copy('both')}>
-                  Copy query + variables
-                </button>
+                {item('query', 'Copy query')}
+                {item('variables', 'Copy variables')}
+                {item('both', 'Copy query + variables')}
               </>
             )}
-            <button
-              role="menuitem"
-              onClick={() => copy('response')}
-              disabled={req.response.state !== 'loaded'}
-            >
-              Copy response
-            </button>
+            {kind === 'rest' && item('body', 'Copy request body', !req.requestBody)}
+            {kind === 'ws'
+              ? item('messages', 'Copy all messages', !req.frames?.length)
+              : item('response', 'Copy response', req.response.state !== 'loaded')}
             <hr />
-            <button role="menuitem" onClick={() => copy('curl')}>
-              Copy as cURL
-            </button>
-            <button role="menuitem" onClick={() => copy('curl-auth')} disabled={!hasCredentials(req)}>
-              Copy as cURL with credentials…
-            </button>
-            <button role="menuitem" onClick={() => copy('fetch')}>
-              Copy as fetch()
-            </button>
-            <hr />
-            {!rest && (
-              <button role="menuitem" onClick={() => copy('name')}>
-                Copy operation name
-              </button>
+            {kind !== 'ws' && (
+              <>
+                {item('curl', 'Copy as cURL')}
+                {item('curl-auth', 'Copy as cURL with credentials…', !hasCredentials(req))}
+                {item('fetch', 'Copy as fetch()')}
+                <hr />
+              </>
             )}
-            <button role="menuitem" onClick={() => copy('url')}>
-              Copy URL
-            </button>
+            {item(
+              'token',
+              'Copy authorization token',
+              !token,
+              token
+                ? 'The Authorization header value without its scheme (no "Bearer ")'
+                : 'This request has no Authorization header',
+            )}
+            {kind === 'graphql' && item('name', 'Copy operation name')}
+            {item('url', 'Copy URL')}
             <hr />
             <button role="menuitem" onClick={() => (menu.current?.hidePopover(), onExport())}>
               Export…
@@ -196,7 +229,7 @@ export function RequestDetails({ req, settings, tab: wanted, onTab, onClose, con
           {req.transport !== 'http' && (
             <span className="pill">
               {req.transport === 'websocket'
-                ? `WebSocket · ${req.wsProtocol}`
+                ? `WebSocket${req.wsProtocol ? ` · ${req.wsProtocol}` : ''}`
                 : req.transport === 'sse'
                   ? 'Server-sent events'
                   : 'Incremental (@defer/@stream)'}
@@ -218,7 +251,7 @@ export function RequestDetails({ req, settings, tab: wanted, onTab, onClose, con
             onClick={() => onTab(t.id)}
           >
             {t.label}
-            {t.id === 'response' && errorCount > 0 && (
+            {(t.id === 'response' || t.id === 'both') && errorCount > 0 && (
               <span className="tab-err" aria-label={`${errorCount} errors`}>
                 {errorCount}
               </span>
@@ -228,6 +261,7 @@ export function RequestDetails({ req, settings, tab: wanted, onTab, onClose, con
                 !
               </span>
             )}
+            {t.id === 'events' && <span className="tab-count">{req.frames?.length ?? 0}</span>}
           </button>
         ))}
       </div>
@@ -239,11 +273,13 @@ export function RequestDetails({ req, settings, tab: wanted, onTab, onClose, con
           {tab === 'request' && <RequestTab req={req} settings={settings} />}
           {tab === 'query' && <QueryTab req={req} settings={settings} />}
           {tab === 'variables' && <VariablesTab req={req} settings={settings} />}
+          {tab === 'both' && <BothTab req={req} settings={settings} onRaw={() => onTab('raw')} />}
           {tab === 'response' && <ResponseTab req={req} settings={settings} onRaw={() => onTab('raw')} />}
           {tab === 'raw' && <RawTab req={req} />}
           {tab === 'headers' && <HeadersTab req={req} settings={settings} />}
           {tab === 'timing' && <TimingTab req={req} />}
           {tab === 'replay' && <ReplayTab req={req} key={req.id} />}
+          {tab === 'events' && <EventStreamTab req={req} />}
         </ErrorBoundary>
       </div>
     </section>

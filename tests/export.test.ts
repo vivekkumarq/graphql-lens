@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { shellQuote, toCurl, toFetch, hasCredentials } from '../src/export/curl';
 import { harEntries, toHar, toJSONExport } from '../src/export/har';
-import { isSensitiveHeader, redactHeaders } from '../src/network/headers';
+import { authToken, isSensitiveHeader, redactHeaders } from '../src/network/headers';
 import { normalizeEntry } from '../src/network/normalizer';
 import { buildReplayScript, replayRequest, replayableHeaders } from '../src/replay/replay-request';
 import { filterRequests } from '../src/panel/utils/filter';
@@ -22,6 +22,17 @@ const headers = [
 const req = (body: unknown, extra: Partial<GraphQLRequest> = {}): GraphQLRequest => ({
   ...normalizeEntry(post(body, { headers }), 'r1')!,
   ...extra,
+});
+
+describe('authToken', () => {
+  it('returns the Authorization credential without its scheme', () => {
+    const h = (value: string) => [{ name: 'Authorization', value }];
+    expect(authToken(h('Bearer eyJhbGciOi.payload.sig'))).toBe('eyJhbGciOi.payload.sig');
+    expect(authToken(h('  bearer   abc  '))).toBe('abc');
+    expect(authToken(h('Basic dXNlcjpwYXNz'))).toBe('dXNlcjpwYXNz');
+    expect(authToken(h('raw-token-without-scheme'))).toBe('raw-token-without-scheme');
+    expect(authToken([{ name: 'x-api-key', value: 'k' }])).toBeUndefined();
+  });
 });
 
 describe('sensitive headers', () => {
@@ -157,16 +168,38 @@ describe('filterRequests', () => {
       },
     ),
     req({ extensions: { persistedQuery: { sha256Hash: 'abc' } } }, { id: 'f', response: loaded('{}') }),
+    req(
+      { query: '{ x }' },
+      {
+        id: 'g',
+        kind: 'ws',
+        transport: 'websocket',
+        status: 101,
+        duration: 60000,
+        operations: [{ index: 0, name: '/live' }],
+        frames: [{ type: 'receive', time: 1, opcode: 1, data: '{"price":"ws-tick-77"}' }],
+        response: loaded(''),
+      },
+    ),
+    req([{ query: 'query A { a }' }, { query: 'query B { b }' }], {
+      id: 'h',
+      duration: 1500,
+      response: loaded('[]'),
+    }),
   ];
   const ids = (f: Partial<Parameters<typeof filterRequests>[1]>) =>
     filterRequests(all, { text: '', type: 'all', status: 'all', ...f }).map((r) => r.id);
 
   it('filters by type, outcome and status class', () => {
-    expect(ids({ type: 'operation' })).toEqual(['a', 'b', 'c', 'f']); // persisted (unknown type) too
+    expect(ids({ type: 'operation' })).toEqual(['a', 'b', 'c', 'f', 'h']); // persisted (unknown type) too
     expect(ids({ type: 'subscription' })).toEqual(['d']);
     expect(ids({ type: 'rest' })).toEqual(['e']);
+    expect(ids({ type: 'ws' })).toEqual(['g']);
+    expect(ids({ type: 'persisted' })).toEqual(['f']);
+    expect(ids({ type: 'batch' })).toEqual(['h']);
+    expect(ids({ type: 'slow' })).toEqual(['h']); // an open socket is never "slow"
     expect(ids({ type: 'errors' })).toEqual(['c', 'd']);
-    expect(ids({ type: 'success' })).toEqual(['a', 'b', 'e', 'f']);
+    expect(ids({ type: 'success' })).toEqual(['a', 'b', 'e', 'f', 'g', 'h']);
     expect(ids({ status: '5xx' })).toEqual(['c']);
     expect(ids({ status: '4xx' })).toEqual(['d']);
   });
@@ -176,7 +209,8 @@ describe('filterRequests', () => {
     expect(ids({ text: 'VIVEK@' })).toEqual(['b']);
     expect(ids({ text: 'needle' })).toEqual(['a']);
     expect(ids({ text: 'shoe-42' })).toEqual(['e']); // request bodies
-    expect(ids({ text: 'api.example.com' })).toHaveLength(6);
+    expect(ids({ text: 'ws-tick-77' })).toEqual(['g']); // WebSocket messages
+    expect(ids({ text: 'api.example.com' })).toHaveLength(8);
     expect(ids({ text: '(' })).toEqual([]); // regex characters are literal
   });
 });

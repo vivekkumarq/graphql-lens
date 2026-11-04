@@ -98,7 +98,17 @@ try {
       if (!all[i]) break;
       await all[i].click();
       await panel.waitForSelector('.details');
-      for (const label of ['Query', 'Variables', 'Request', 'Response', 'Headers', 'Timing', 'Raw']) {
+      for (const label of [
+        'Query',
+        'Variables',
+        'Request',
+        'Request + Response',
+        'Response',
+        'Event stream',
+        'Headers',
+        'Timing',
+        'Raw',
+      ]) {
         const idx = await panel.$$eval(
           '.tabs button',
           (b, l) => b.findIndex((x) => x.textContent?.startsWith(l)),

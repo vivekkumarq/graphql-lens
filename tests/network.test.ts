@@ -123,6 +123,24 @@ describe('GraphQL over WebSocket', () => {
     expect(sub).toMatchObject({ id: '7', protocol: 'subscriptions-transport-ws', completed: true });
   });
 
+  it('waits for a real start time, then updates the row when the handshake completes', () => {
+    const tracker: WsTracker = new Map();
+    let n = 0;
+    const id = () => `w${++n}`;
+    const base = entry({ url: 'wss://chat.example.com/', status: 0 });
+    // just created: Chrome reports a placeholder start time
+    expect(websocketRequests({ ...base, startedDateTime: '1969-12-31T23:59:59.000Z' }, tracker, id)).toEqual(
+      [],
+    );
+    const [pending] = websocketRequests(base, tracker, id);
+    expect(pending).toMatchObject({ kind: 'ws', status: 0 });
+    const done = { ...base, response: { ...base.response, status: 101 } };
+    const [open] = websocketRequests(done, tracker, id);
+    expect(open).toMatchObject({ id: pending?.id, status: 101 });
+    expect(websocketRequests(done, tracker, id)).toEqual([]);
+    expect(tracker.size).toBe(1); // one socket, one row
+  });
+
   it('turns subscriptions into requests and only re-emits changed ones', () => {
     const tracker: WsTracker = new Map();
     let n = 0;
@@ -130,7 +148,10 @@ describe('GraphQL over WebSocket', () => {
       ...entry({ url: 'wss://api.example.com/graphql', status: 101 }),
       _webSocketMessages: transportWs.slice(0, 4),
     };
-    const [first] = websocketRequests(e, tracker, () => `w${++n}`);
+    const [conn, first] = websocketRequests(e, tracker, () => `w${++n}`);
+    // the socket itself, with every frame
+    expect(conn).toMatchObject({ kind: 'ws', status: 101, operations: [{ name: '/graphql' }] });
+    expect(conn?.frames).toHaveLength(4);
     expect(first).toMatchObject({
       transport: 'websocket',
       method: 'WS',
@@ -138,7 +159,13 @@ describe('GraphQL over WebSocket', () => {
       operations: [{ name: 'OnTick', operationType: 'subscription' }],
     });
     expect(websocketRequests(e, tracker, () => `w${++n}`)).toHaveLength(0);
-    const [again] = websocketRequests({ ...e, _webSocketMessages: transportWs }, tracker, () => `w${++n}`);
+    const [conn2, again] = websocketRequests(
+      { ...e, _webSocketMessages: transportWs },
+      tracker,
+      () => `w${++n}`,
+    );
+    expect(conn2?.id).toBe(conn?.id);
+    expect(conn2?.frames).toHaveLength(transportWs.length);
     expect(again?.id).toBe(first?.id);
     expect(again?.events).toHaveLength(3);
   });
@@ -153,10 +180,19 @@ describe('WebSocket HAR round-trip', () => {
       msg('receive', { id: '9', type: 'complete' }, 3),
     ];
     const e = { ...entry({ url: 'wss://x.dev/graphql', status: 101 }), _webSocketMessages: messages };
-    const [req] = websocketRequests(e, new Map(), () => 'w1');
-    const [back] = harEntries(JSON.parse(JSON.stringify(toHar([req!], { includeCredentials: false }))));
-    const [again] = websocketRequests(back!, new Map(), () => 'w2');
-    expect(again?.operations[0]?.name).toBe('OnTick');
-    expect(again?.events?.map((x) => x.type)).toEqual(['next', 'complete']);
+    const reqs = websocketRequests(e, new Map(), () => `w${Math.random()}`);
+    const roundTrip = (rs: typeof reqs) =>
+      harEntries(JSON.parse(JSON.stringify(toHar(rs, { includeCredentials: false })))).flatMap((x) =>
+        websocketRequests(x, new Map(), () => `i${Math.random()}`),
+      );
+    // socket + subscription export as one HAR entry and come back as the same two rows
+    const back = roundTrip(reqs);
+    expect(back.map((r) => r.kind ?? 'graphql')).toEqual(['ws', 'graphql']);
+    expect(back[0]?.frames).toHaveLength(3);
+    expect(back[1]?.operations[0]?.name).toBe('OnTick');
+    expect(back[1]?.events?.map((x) => x.type)).toEqual(['next', 'complete']);
+    // a subscription exported on its own still round-trips
+    const alone = roundTrip([reqs[1]!]);
+    expect(alone.find((r) => !r.kind)?.events?.map((x) => x.type)).toEqual(['next', 'complete']);
   });
 });

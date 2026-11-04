@@ -255,6 +255,23 @@ const scenarios = {
     'Resolver takes 1.5 s',
     () => post({ operationName: 'SlowReport', query: 'query SlowReport { slow(ms: 1500) }' }),
   ],
+  plainWs: [
+    'Plain WebSocket',
+    'A non-GraphQL WebSocket price feed (JSON + one binary frame)',
+    () =>
+      new Promise((resolve) => {
+        const ws = new WebSocket(`${location.origin.replace('http', 'ws')}/live-prices`);
+        ws.binaryType = 'arraybuffer';
+        ws.onopen = () => ws.send(JSON.stringify({ action: 'subscribe', symbols: ['BTC', 'ETH'] }));
+        ws.onmessage = (e) => {
+          if (typeof e.data !== 'string') {
+            ws.send(JSON.stringify({ action: 'unsubscribe' }));
+            log('WS /live-prices done');
+            setTimeout(resolve, 200);
+          }
+        };
+      }),
+  ],
   notGraphql: [
     'REST call',
     'Plain JSON API with a "query" field: listed as REST, not GraphQL',

@@ -3,12 +3,18 @@ import type { Filters, StatusFilter, TypeFilter } from '../utils/filter';
 import { Icon } from './Icon';
 
 const TYPES: { id: TypeFilter; label: string }[] = [
-  { id: 'all', label: 'REST + GQL' },
+  { id: 'all', label: 'REST + GQL + WS' },
   { id: 'operation', label: 'Queries & Mutations' },
-  { id: 'subscription', label: 'Subscriptions' },
   { id: 'rest', label: 'REST' },
+  { id: 'ws', label: 'WS' },
   { id: 'errors', label: 'Errors' },
   { id: 'success', label: 'Successful' },
+];
+const MORE: { id: TypeFilter; label: string }[] = [
+  { id: 'subscription', label: 'Subscriptions' },
+  { id: 'persisted', label: 'Persisted queries' },
+  { id: 'batch', label: 'Batched requests' },
+  { id: 'slow', label: 'Slow (over 1 s)' },
 ];
 
 interface Props {
@@ -34,12 +40,16 @@ export function Toolbar({ searchRef, ...p }: Props) {
     <header className="toolbar" role="toolbar" aria-label="GraphQL Lens toolbar">
       <div className="toolbar-row">
         <button
-          className={`icon-btn record ${p.recording ? 'on' : ''}`}
-          title={p.recording ? 'Stop recording (Ctrl+E)' : 'Record GraphQL and REST traffic (Ctrl+E)'}
+          className={`btn record ${p.recording ? 'on' : ''}`}
+          title={
+            p.recording
+              ? 'Recording. Click to stop (Ctrl+E)'
+              : 'Recording is stopped. Click to start (Ctrl+E)'
+          }
           aria-pressed={p.recording}
           onClick={() => p.onRecording(!p.recording)}
         >
-          <Icon name="record" />
+          <Icon name="record" /> {p.recording ? 'Stop' : 'Record'}
         </button>
         <button className="icon-btn" title="Clear history" aria-label="Clear history" onClick={p.onClear}>
           <Icon name="clear" />
@@ -110,6 +120,19 @@ export function Toolbar({ searchRef, ...p }: Props) {
           ))}
         </div>
         <span className="divider" />
+        <select
+          aria-label="More filters"
+          className={MORE.some((m) => m.id === p.filters.type) ? 'on' : ''}
+          value={MORE.some((m) => m.id === p.filters.type) ? p.filters.type : ''}
+          onChange={(e) => set({ type: (e.target.value || 'all') as TypeFilter })}
+        >
+          <option value="">More filters…</option>
+          {MORE.map((m) => (
+            <option key={m.id} value={m.id}>
+              {m.label}
+            </option>
+          ))}
+        </select>
         <select
           aria-label="HTTP status"
           value={p.filters.status}

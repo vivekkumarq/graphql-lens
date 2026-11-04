@@ -182,10 +182,10 @@ try {
   // ---- capture every scenario ----
   const t0 = Date.now();
   await page.evaluate(() => window.demo.runAll());
-  const total = await until(async () => ((await count()) >= 21 ? count() : 0), 15000);
+  const total = await until(async () => ((await count()) >= 23 ? count() : 0), 15000);
   check(
-    'captures all 20 GraphQL scenarios (incl. WebSocket) plus the REST call',
-    total === 21,
+    'captures 20 GraphQL scenarios, the REST call and both WebSocket connections',
+    total === 23,
     `${total} captured in ${Date.now() - t0} ms`,
   );
 
@@ -237,14 +237,34 @@ try {
     qm === 18 && letters.has('Q') && letters.has('M'),
     `${qm} ${[...letters]}`,
   );
-  await chip('Subscriptions');
-  check('Subscriptions filter (SSE + WebSocket)', (await count()) === 2, `${await count()}`);
+  await panel.select('select[aria-label="More filters"]', 'subscription');
+  await sleep(150);
+  check('Subscriptions (More filters dropdown): SSE + WebSocket', (await count()) === 2, `${await count()}`);
+  await chip('WS');
+  const wsLetters = await panel.$$eval('.row .type-badge', (b) => b.map((x) => x.textContent).join(''));
+  check('WS filter: both sockets (W) and the GraphQL subscription on one', (await count()) === 3, wsLetters);
+  await openRow('/live-prices');
+  await panel.waitForSelector('.events-list', { timeout: 5000 });
+  const events = await text('.events-list');
+  check(
+    'Event stream lists sent and received WebSocket messages, binary too',
+    events.includes('"action":"subscribe"') &&
+      events.includes('"symbol":"ETH"') &&
+      events.includes('Binary message'),
+    (await text('.events-bar')).trim(),
+  );
+  await clickByText('.ev-data', '{"type":"tick","symbol":"BTC"');
+  await panel.waitForSelector('.events .cm-editor', { timeout: 5000 });
+  check('clicking a message shows it in full', (await text('.events .code-view')).includes('"price"'));
+  await search('');
+  await shot('4-websocket-events');
   await chip('REST');
   check('REST filter', (await count()) === 1, `${await count()}`);
   await openRow('/api/search');
   check('REST call shows a Request tab with its body', (await text('.tab-body')).includes('shoes'));
   await search('');
-  await chip('REST + GQL');
+  await chip('REST + GQL + WS');
+  check('record button says Stop while recording', (await text('.btn.record')).trim() === 'Stop');
   await panel.select('select[aria-label="HTTP status"]', '4xx');
   await sleep(150);
   check('HTTP status filter 4xx', (await count()) === 5, `${await count()}`);
@@ -259,6 +279,17 @@ try {
     'structure shows fragments, directives and variables',
     structure.includes('UserFields') && structure.includes('@include') && structure.includes('$id: ID!'),
   );
+  const queryLabels = await panel.$$eval('.op-code .code-label', (l) => l.map((x) => x.textContent));
+  check('Query tab also shows the variables under the query', queryLabels.join() === 'Query,Variables');
+  await tab('Request + Response');
+  await panel.waitForSelector('.split2 .response', { timeout: 5000 });
+  const both = await text('.split2');
+  check(
+    'Request + Response tab shows both side by side',
+    both.includes('query GetUser') && both.includes('"withPosts"') && both.includes('"data"'),
+  );
+  await search('');
+  await shot('3-request-response');
   await tab('Variables');
   check('variables tab shows declared vs sent', (await text('.vars-table')).includes('withPosts'));
   await search('');
@@ -285,6 +316,14 @@ try {
   await clickByText('.menu button', 'Copy as cURL');
   const toastText = await until(async () => text('.toast'), 3000);
   check('Copy as cURL works and redacts by default', /cURL copied/.test(toastText), toastText);
+  await panel.evaluate(() => {
+    navigator.clipboard.writeText = async (t) => void (window.__copied = t);
+  });
+  await panel.click('.copy-btn');
+  await sleep(200);
+  await clickByText('.menu button', 'Copy authorization token');
+  const copied = await until(() => panel.evaluate(() => window.__copied), 3000);
+  check('Copy authorization token copies the token without "Bearer"', copied === 'demo-secret-token', copied);
 
   await openRow('GetProducts');
   check('batched request is grouped', (await text('.details h2')) === 'Batch of 3 operations');
@@ -294,7 +333,6 @@ try {
   await panel.waitForSelector('.errors', { timeout: 5000 });
   check('batch errors are attributed to their operation', (await text('.errors')).includes('#3 BadOne'));
   await search('');
-  await shot('3-batch');
 
   await openRow('ProductPage');
   await tab('Response');
@@ -332,7 +370,7 @@ try {
   );
   await until(async () => (await count()) > before, 5000);
   check('the replayed request is captured too', (await count()) === before + 1);
-  await shot('4-replay');
+  await shot('5-replay');
 
   // ---- keyboard ----
   await panel.click('.list-body');
@@ -412,12 +450,6 @@ try {
   await panel.click('dialog[open] header .icon-btn');
   await sleep(200);
   check('settings dialog closes', !(await panel.$('dialog[open]')));
-  if (screenshots) {
-    await openRow('CreateUser');
-    await tab('Headers');
-    await search('');
-    await shot('5-headers-privacy');
-  }
 
   // ---- navigation & performance ----
   await page.reload();
