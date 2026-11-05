@@ -13,7 +13,7 @@ The extension itself is published **free** for everyone. Both stores take the **
 
 ## Package
 
-- File: `release/graphql-lens-1.2.0.zip` (manifest V3, about 230 kB)
+- File: `release/graphql-lens-1.2.1.zip` (manifest V3, about 230 kB)
 - Category: **Developer Tools**
 - Language: English
 

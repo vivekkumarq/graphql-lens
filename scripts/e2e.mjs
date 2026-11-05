@@ -224,6 +224,19 @@ try {
   check('search matches variable values', (await count()) === 1);
   await search('Not authorized to read secret');
   check('search matches response bodies', (await count()) === 1);
+  await search('NOT AUTHORIZED TO READ SECRET');
+  check('search is not case-sensitive', (await count()) === 1);
+  await search('shoes');
+  check('search matches REST request bodies', (await count()) === 1, `${await count()}`);
+  await search('limit=20');
+  check('search matches query parameters in the URL', (await count()) === 1, `${await count()}`);
+  await search('"symbol":"ETH"');
+  check('search matches WebSocket messages', (await count()) === 1, `${await count()}`);
+  await search('zz-no-such-request');
+  check(
+    'no match shows "No requests match" with Reset filters',
+    (await count()) === 0 && (await text('.list-pane')).includes('Reset filters'),
+  );
   await search('');
 
   await chip('Errors');

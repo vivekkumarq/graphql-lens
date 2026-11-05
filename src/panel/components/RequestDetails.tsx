@@ -1,4 +1,4 @@
-import { useId, useRef, useState } from 'react';
+import { memo, useId, useRef, useState } from 'react';
 import type { GraphQLRequest } from '../../types/graphql';
 import type { Settings } from '../../storage/settings';
 import { hasCredentials, toCurl, toFetch } from '../../export/curl';
@@ -74,7 +74,16 @@ interface Props {
   onExport: () => void;
 }
 
-export function RequestDetails({ req, settings, tab: wanted, onTab, onClose, confirm, onExport }: Props) {
+/** Memoised: re-renders only when the shown request, tab or settings change, not on every new row. */
+export const RequestDetails = memo(function RequestDetails({
+  req,
+  settings,
+  tab: wanted,
+  onTab,
+  onClose,
+  confirm,
+  onExport,
+}: Props) {
   const op = req.operations[0];
   const kind = req.kind ?? 'graphql';
   const tabs = TABS[kind];
@@ -284,4 +293,4 @@ export function RequestDetails({ req, settings, tab: wanted, onTab, onClose, con
       </div>
     </section>
   );
-}
+});

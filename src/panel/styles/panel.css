@@ -1277,23 +1277,53 @@ kbd {
 }
 
 /* ---------- Request + Response ---------- */
+/* two columns that scroll on their own, so the top of both is always in view */
 .split2 {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   gap: 12px;
-  align-items: start;
+  height: 100%;
+}
+.split2 > section {
+  min-height: 0;
+  overflow: auto;
+}
+.split2 .code-host .cm-editor,
+.split2 .code-fallback {
+  max-height: none; /* the column scrolls, not each box inside it */
 }
 .split-head {
-  margin: 0 0 6px;
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  margin: 0;
+  padding: 0 0 6px;
+  background: var(--bg);
   font-size: 12px;
   text-transform: uppercase;
   letter-spacing: 0.06em;
   color: var(--muted);
 }
-@container tab (max-width: 620px) {
+/* too narrow for two columns: request on top, response below, each half the height */
+@container tab (max-width: 440px) {
   .split2 {
     grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: minmax(0, 1fr) minmax(0, 1fr);
   }
+}
+.params-table {
+  background: var(--code-bg);
+  font: var(--code-size) / 1.5 var(--mono);
+}
+.params-table th {
+  color: var(--syn-field);
+  font-weight: 400;
+}
+.params-table td {
+  color: var(--syn-string);
+}
+.params-table tr:last-child > * {
+  border-bottom: 0;
 }
 
 /* ---------- WebSocket event stream ---------- */
@@ -1332,9 +1362,18 @@ kbd {
   display: grid;
   grid-template-columns: 22px minmax(0, 1fr) 70px 100px;
   align-items: center;
-  min-height: 26px;
+  box-sizing: border-box;
+  height: 26px; /* EV_ROW in EventStreamTab.tsx */
   border-bottom: 1px solid color-mix(in srgb, var(--line) 60%, transparent);
   cursor: pointer;
+}
+.ev-rows {
+  position: relative;
+}
+.ev-rows > .ev-row {
+  position: absolute;
+  left: 0;
+  right: 0;
 }
 .ev-row > span {
   padding: 0 6px;

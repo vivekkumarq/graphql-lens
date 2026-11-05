@@ -276,7 +276,7 @@ const scenarios = {
     'REST call',
     'Plain JSON API with a "query" field: listed as REST, not GraphQL',
     async () => {
-      const r = await fetch('/api/search', {
+      const r = await fetch('/api/search?lang=en&limit=20', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({ query: 'shoes', page: 1 }),

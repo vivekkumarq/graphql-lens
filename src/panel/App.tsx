@@ -62,7 +62,7 @@ export function App() {
   const mainRef = useRef<HTMLDivElement>(null);
 
   // Capture reads live values through refs so it is started exactly once.
-  const live = useRef({ recording, settings, visible: true });
+  const live = useRef({ recording, settings, visible: true, watching: false });
   useEffect(() => {
     live.current.recording = recording;
     live.current.settings = settings;
@@ -82,6 +82,7 @@ export function App() {
         captureWebSockets: () => live.current.settings.captureWebSockets,
         captureRest: () => live.current.settings.captureRest,
         isPanelVisible: () => live.current.visible,
+        isWatchingSockets: () => live.current.watching,
       });
     let stop: (() => void) | undefined;
     if (live.current.settings.persistRequests)
@@ -126,6 +127,9 @@ export function App() {
   );
   const active = useMemo(() => requests.find((r) => r.id === activeId), [requests, activeId]);
   const errorCount = useMemo(() => requests.filter(hasErrors).length, [requests]);
+  useEffect(() => {
+    live.current.watching = active?.transport === 'websocket' || filters.type === 'ws';
+  }, [active, filters.type]);
 
   const selectOnly = useCallback((id: string | null) => {
     setActiveId(id);
@@ -175,6 +179,10 @@ export function App() {
     },
     [visible, activeId, selectOnly],
   );
+
+  // stable, so the memoised details pane skips re-rendering when other requests arrive
+  const closeDetails = useCallback(() => selectOnly(null), [selectOnly]);
+  const openExport = useCallback(() => setDialog('export'), []);
 
   const clearAll = useCallback(() => {
     store.clear();
@@ -348,9 +356,9 @@ export function App() {
               settings={settings}
               tab={tab}
               onTab={setTab}
-              onClose={() => selectOnly(null)}
+              onClose={closeDetails}
               confirm={confirm}
-              onExport={() => setDialog('export')}
+              onExport={openExport}
             />
           </>
         )}

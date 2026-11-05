@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.2.1 (2026-11-05)
+
+- **Faster, no more periodic freezes**: the WebSocket check asked DevTools for the whole network log (about 6 MB on a busy page) every 2 seconds, stalling DevTools for up to 0.4 s each time. It now runs every 2 s only while a socket is selected, the **WS** filter is on or the page is loading, every 15 s otherwise, and never more than ~10% of the time.
+- The **Event stream** renders only the messages in view: a socket with 2,000 messages opens in under 40 ms instead of ~360 ms and no longer freezes the panel as new messages arrive.
+- The details pane no longer re-renders whenever another request arrives or you type in search, and the code editor loads in the background so the first click is instant.
+- **Request + Response** stays side by side down to narrow panes, and each column scrolls on its own. REST calls show their query parameters and body boxed like a GraphQL query and its variables (with a copy button).
+- Shorter search placeholder; hover the search box to see everything it searches.
+
 ## 1.2.0 (2026-11-04)
 
 - **WebSockets**: every WebSocket connection, GraphQL or not, gets a row (**W** badge, **WS · N** messages) with an **Event stream** tab: sent ↑ / received ↓ messages with time and size, a filter, and a full formatted view of any message. Binary frames are shown as base64.

@@ -1,8 +1,8 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { normalizeEntry } from '../src/network/normalizer';
 import { websocketRequests, type WsTracker } from '../src/network/websocket';
 import { parseWebSocketMessages, type WsMessage } from '../src/graphql/subscription-parser';
-import { responseStateFor } from '../src/network/capture';
+import { responseStateFor, startCapture } from '../src/network/capture';
 import { entry, post } from './helpers';
 
 describe('normalizeEntry', () => {
@@ -194,5 +194,49 @@ describe('WebSocket HAR round-trip', () => {
     // a subscription exported on its own still round-trips
     const alone = roundTrip([reqs[1]!]);
     expect(alone.find((r) => !r.kind)?.events?.map((x) => x.type)).toEqual(['next', 'complete']);
+  });
+});
+
+describe('WebSocket polling', () => {
+  it('polls getHAR every 2 s while loading or while a socket is watched, every 15 s otherwise', () => {
+    vi.useFakeTimers();
+    let calls = 0;
+    const events = { addListener() {}, removeListener() {} };
+    vi.stubGlobal('chrome', {
+      devtools: {
+        network: {
+          getHAR: (cb: (log: { entries: [] }) => void) => (calls++, cb({ entries: [] })),
+          onRequestFinished: events,
+          onNavigated: events,
+        },
+      },
+    });
+    let watching = false;
+    const stop = startCapture(
+      { upsert() {}, patch() {}, navigated() {} },
+      {
+        isRecording: () => true,
+        maxResponseBytes: () => 1e6,
+        captureWebSockets: () => true,
+        captureRest: () => true,
+        isPanelVisible: () => true,
+        isWatchingSockets: () => watching,
+      },
+    );
+    const during = (ms: number) => {
+      calls = 0;
+      vi.advanceTimersByTime(ms);
+      return calls;
+    };
+    try {
+      expect(during(20_000)).toBeGreaterThanOrEqual(9); // page load: about every 2 s
+      expect(during(60_000)).toBeLessThanOrEqual(4); // idle: about every 15 s
+      watching = true;
+      expect(during(20_000)).toBeGreaterThanOrEqual(9);
+    } finally {
+      stop();
+      vi.useRealTimers();
+      vi.unstubAllGlobals();
+    }
   });
 });

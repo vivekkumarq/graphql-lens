@@ -60,7 +60,8 @@ export function Toolbar({ searchRef, ...p }: Props) {
           <input
             ref={searchRef}
             type="search"
-            placeholder="Search names, queries, variables, bodies, responses, URLs"
+            placeholder="Search names, queries, bodies, URLs"
+            title="Searches operation names, queries, variables, request and response bodies, WebSocket messages and URLs (not case-sensitive)"
             aria-label="Search requests"
             value={p.filters.text}
             onChange={(e) => set({ text: e.target.value })}

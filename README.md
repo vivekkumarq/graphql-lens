@@ -21,7 +21,7 @@ GraphQL Lens adds an API panel to Chrome and Edge DevTools. Every GraphQL query,
 
 - Query viewer with syntax highlighting, line numbers, folding, in-editor search (Ctrl+F) and line wrapping, using CodeMirror 6.
 - _Formatted_ (canonical reprint) or _As sent_ view of each query, with the **variables shown right under the query**.
-- **Request + Response** tab: what was sent and what came back, side by side (stacked when the pane is narrow).
+- **Request + Response** tab: what was sent and what came back, side by side, each column scrolling on its own (one above the other only when the pane is very narrow). REST calls show their query parameters and body there, boxed just like a GraphQL query and its variables.
 - Operation structure from the reference `graphql` parser: type, name, root fields (with aliases), depth, number of fields selected, variable definitions, fragments and directives.
 - Variables tab compares **declared** variables with the **sent** values and flags missing required ones.
 - Response viewer with collapsible JSON and a **GraphQL errors** summary: message, `extensions.code`, path and location.
@@ -123,7 +123,7 @@ Click **Remove** on the GraphQL Lens card at `chrome://extensions` (or `edge://e
 | My requests disappear when the page reloads | Tick **Preserve log** in the toolbar.                                                                                                                                                                                                                                        |
 | A local `file://` page isn't inspected      | At `chrome://extensions` → GraphQL Lens → **Details**, turn on **Allow access to file URLs**.                                                                                                                                                                                |
 | Replay fails with "Failed to fetch"         | The replay runs inside the page, so the page's CORS and Content-Security-Policy rules apply. The message explains which one probably blocked it.                                                                                                                             |
-| WebSocket subscription events show up late  | WebSocket frames are refreshed every 2 seconds while the panel is visible.                                                                                                                                                                                                   |
+| WebSocket subscription events show up late  | WebSocket messages are refreshed every 2 seconds while a socket is selected or the **WS** filter is on (and while the page loads), about every 15 seconds otherwise. Select the socket to see its messages live.                                                             |
 | A response says it was truncated            | Raise **Maximum response size** in ⚙ Settings (default 10 MB).                                                                                                                                                                                                               |
 | The panel is too narrow                     | Drag the divider between the list and the details, or dock DevTools to the bottom (⋮ menu → Dock side).                                                                                                                                                                      |
 
@@ -199,7 +199,7 @@ Key decisions:
 
 - **No background service worker and no host permissions.** Everything the panel needs comes from `chrome.devtools.*`. The only permission is `storage`, for settings.
 - **Replay runs in the inspected page** (`chrome.devtools.inspectedWindow.eval` + `fetch`). It behaves exactly like the page's own requests and never sidesteps CORS or CSP. A failure explains why (CORS, CSP `connect-src`, mixed content, network).
-- **WebSocket frames** are only exposed to extensions through `getHAR()`'s `_webSocketMessages`, so the panel polls it every 2 s while it is visible.
+- **WebSocket frames** are only exposed to extensions through `getHAR()`'s `_webSocketMessages`, so the panel polls it. `getHAR()` serialises the whole network log (several MB on a busy page) and stalls DevTools while it does, so it is called every 2 s only while a socket is on screen or the page is loading, every 15 s otherwise, and never more than ~10% of the time.
 - **Name and version have one home each.** The product name lives in `public/_locales/en/messages.json` (rename there). The version comes from `package.json` and is written into the manifest at build time.
 
 ## Limitations
@@ -207,7 +207,7 @@ Key decisions:
 - REST capture lists fetch/XHR calls only. Page loads, scripts, styles, images and fonts are left to the Network panel.
 - DevTools must be open for traffic to be recorded. This is a browser rule for every DevTools extension. Reload the page to capture its initial requests.
 - SSE and `@defer` responses appear when the stream finishes. Chrome gives extensions the body only once the request completes.
-- WebSocket messages update about every 2 seconds (polling), and frames sent before DevTools opened are not available. The latest 2,000 messages per socket are kept.
+- WebSocket messages update about every 2 seconds while the socket is selected (polling; every 15 seconds otherwise), and frames sent before DevTools opened are not available. The latest 2,000 messages per socket are kept.
 - Replay can't resend WebSocket subscriptions or multipart file uploads with their original files. Headers that page scripts may not set (`Cookie`, `Origin`, `User-Agent`, `Sec-*`) are dropped; the browser adds its own.
 - Response bodies larger than the configured limit (10 MB by default) are truncated and shown raw.
 - "Formatted" queries are reprinted by the reference printer, which drops comments. Use _As sent_ to see the original.

@@ -16,11 +16,15 @@ export interface CaptureOptions {
   captureWebSockets(): boolean;
   captureRest(): boolean;
   isPanelVisible(): boolean;
+  /** a socket (or the WS filter) is on screen, so its messages should update quickly */
+  isWatchingSockets(): boolean;
 }
 
 type LiveEntry = HarEntryLike & { getContent?(cb: (content: string, encoding: string) => void): void };
 
-const WS_POLL_MS = 2000;
+const WS_POLL_MS = 2000; // while a socket is on screen
+const WS_IDLE_POLL_MS = 15000; // otherwise: just find new sockets and refresh their message counts
+const WS_LOAD_MS = 20000; // poll quickly this long after the panel opens or the page navigates
 
 // Per-page prefix keeps ids unique against requests restored from session storage.
 const PREFIX = Math.random().toString(36).slice(2, 7);
@@ -100,8 +104,14 @@ export function startCapture(sink: CaptureSink, opts: CaptureOptions): () => voi
     }
   };
 
+  // Pages open most of their sockets while loading, so poll quickly for a while after the panel
+  // opens or the page navigates.
+  let fastUntil = Date.now() + WS_LOAD_MS;
   const onFinished = (entry: chrome.devtools.network.Request) => handle(entry as unknown as LiveEntry);
-  const onNavigated = (url: string) => sink.navigated(url);
+  const onNavigated = (url: string) => {
+    fastUntil = Date.now() + WS_LOAD_MS;
+    sink.navigated(url);
+  };
 
   // Requests made before the panel opened are still in DevTools' network log.
   network.getHAR((log) => {
@@ -110,13 +120,23 @@ export function startCapture(sink: CaptureSink, opts: CaptureOptions): () => voi
   });
   network.onNavigated.addListener(onNavigated);
 
-  // WebSocket frames only reach extensions through getHAR, so poll it for open sockets.
+  // WebSocket frames only reach extensions through getHAR. It serialises the whole network log
+  // (several MB on a busy page) and stalls DevTools while doing so, so poll every 2 s only while a
+  // socket is on screen, rarely otherwise, and never spend more than ~10% of the time on it.
+  let last = 0;
+  let cost = 0;
   const timer = setInterval(() => {
     if (!opts.captureWebSockets() || !opts.isRecording() || !opts.isPanelVisible()) return;
+    const start = Date.now();
+    const fast = opts.isWatchingSockets() || start < fastUntil;
+    const every = Math.max(fast ? WS_POLL_MS : WS_IDLE_POLL_MS, cost * 10);
+    if (start - last < every - 500) return; // 500 ms slack for timer jitter
+    last = start;
     network.getHAR((log) => {
+      cost = Date.now() - start;
       for (const e of log.entries as unknown as HarEntryLike[]) if (isWebSocketEntry(e)) handleWebSocket(e);
     });
-  }, WS_POLL_MS);
+  }, 1000);
 
   return () => {
     clearInterval(timer);
